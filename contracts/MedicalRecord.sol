@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 /**
  * @title MedicalRecord
  * @dev This smart contract now manages all application data, including user identity,
-* appointments, and doctor affiliations, replacing the need for a traditional database.
-*/
+ * appointments, and doctor affiliations, replacing the need for a traditional database.
+ */
 contract MedicalRecord {
 
     // --- USER IDENTITY ---
@@ -38,11 +38,19 @@ contract MedicalRecord {
         uint256 timestamp;
     }
 
+    // --- *** NEW STRUCT TO FIX THE ERROR *** ---
+    // This struct holds the data for the doctorAffiliationStatus mapping
+    struct DoctorAffiliationStatus {
+        string hospitalEmail;
+        AffiliationStatus status;
+    }
+
     // Mapping from a hospital's email to a list of its affiliated doctors (past and present)
     mapping(string => DoctorAffiliation[]) public hospitalDoctorAffiliations;
     
-    // Mapping from a doctor's email to their current hospital and status
-    mapping(string => (string, AffiliationStatus)) public doctorAffiliationStatus;
+    // --- *** CORRECTED MAPPING *** ---
+    // Mapping from a doctor's email to their current hospital and status struct
+    mapping(string => DoctorAffiliationStatus) public doctorAffiliationStatus;
 
     // List of hospital emails for easy lookup
     string[] public hospitalList;
@@ -72,17 +80,16 @@ contract MedicalRecord {
 
     // --- PRESCRIPTIONS, CONSENT & LOGS (Original Functionality) ---
 
-struct Prescription {
+    struct Prescription {
         string doctorName;
         string disease;
         string cid;
-// The IPFS Content ID for the prescription file/data
         uint256 timestamp;
-}
+    }
 
     struct Consent {
         string granteeId; // Now the grantee's email
-string accessLevel;
+        string accessLevel;
         uint256 duration; 
         string status; 
         uint256 timestamp;
@@ -92,21 +99,21 @@ string accessLevel;
 
     struct TransactionLog {
         uint256 timestamp;
-LogType logType;
+        LogType logType;
         string performedBy; // User's email
         string details;
-}
+    }
 
-mapping(string => Prescription[]) public records; // Key: patient email
-mapping(string => Consent[]) public consentLog; // Key: patient email
-mapping(string => TransactionLog[]) public transactionLogs; // Key: patient email
+    mapping(string => Prescription[]) public records; // Key: patient email
+    mapping(string => Consent[]) public consentLog; // Key: patient email
+    mapping(string => TransactionLog[]) public transactionLogs; // Key: patient email
 
 
     // --- EVENTS ---
-event AppointmentBooked(string patientId, uint256 timestamp, string details);
-event HistoryAccessed(string patientId, string doctorId, uint256 timestamp);
+    event AppointmentBooked(string patientId, uint256 timestamp, string details);
+    event HistoryAccessed(string patientId, string doctorId, uint256 timestamp);
     event RecordUpdated(string patientId, string doctorId, uint256 timestamp, string cid);
-event ConsentManaged(string patientId, string granteeId, string status, uint256 timestamp);
+    event ConsentManaged(string patientId, string granteeId, string status, uint256 timestamp);
     event UserRegistered(string email, UserType userType, uint256 timestamp);
     event AffiliationManaged(string hospitalEmail, string doctorEmail, AffiliationStatus status, uint256 timestamp);
     event AppointmentStatusUpdated(string consultingId, string status, uint256 timestamp);
@@ -155,19 +162,20 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         string memory _doctorName,
         string memory _specialization,
         string memory _hospitalEmail,
-        string memory _contactDetails
+        string memory _contactDetails // This param was in my server.js, but not here. Adding it.
     ) public {
         require(isUserEmailRegistered[_doctorEmail] == false, "Email is already registered");
         require(isUserEmailRegistered[_hospitalEmail] == true, "Hospital not found");
         require(users[_hospitalEmail].userType == UserType.Hospital, "Target is not a hospital");
 
         // Register the doctor in the main user mapping
+        string memory doctorDetails = string(abi.encodePacked('{"specialization":"', _specialization, '", "contact":"', _contactDetails, '"}'));
         users[_doctorEmail] = User({
             email: _doctorEmail,
             hashedPassword: _hashedPassword,
             name: _doctorName,
             userType: UserType.Doctor,
-            details: _specialization, // Storing specialization here
+            details: doctorDetails, // Storing specialization & contact
             isRegistered: true
         });
         isUserEmailRegistered[_doctorEmail] = true;
@@ -181,8 +189,12 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
             timestamp: block.timestamp
         }));
 
-        // Set doctor's initial status
-        doctorAffiliationStatus[_doctorEmail] = (_hospitalEmail, AffiliationStatus.Pending);
+        // --- *** UPDATED CODE *** ---
+        // Set doctor's initial status using the new struct
+        doctorAffiliationStatus[_doctorEmail] = DoctorAffiliationStatus({
+            hospitalEmail: _hospitalEmail,
+            status: AffiliationStatus.Pending
+        });
 
         emit AffiliationManaged(_hospitalEmail, _doctorEmail, AffiliationStatus.Pending, block.timestamp);
     }
@@ -196,7 +208,6 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         AffiliationStatus _status
     ) public {
         // Simple security: only the registered hospital can manage its doctors
-        // In a real app, you'd check msg.sender against the hospital's wallet address
         require(isUserEmailRegistered[_hospitalEmail] == true, "Hospital not found");
         require(users[_hospitalEmail].userType == UserType.Hospital, "Sender is not a hospital");
 
@@ -212,8 +223,12 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         }
         require(found, "Doctor affiliation not found for this hospital");
 
-        // Update the doctor's central status
-        doctorAffiliationStatus[_doctorEmail] = (_hospitalEmail, _status);
+        // --- *** UPDATED CODE *** ---
+        // Update the doctor's central status using the new struct
+        doctorAffiliationStatus[_doctorEmail] = DoctorAffiliationStatus({
+            hospitalEmail: _hospitalEmail,
+            status: _status
+        });
 
         emit AffiliationManaged(_hospitalEmail, _doctorEmail, _status, block.timestamp);
     }
@@ -231,8 +246,12 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         require(isUserEmailRegistered[_patientEmail], "Patient not found");
         require(isUserEmailRegistered[_doctorEmail], "Doctor not found");
 
-        // Get the doctor's hospital
-        (string memory hospitalEmail, AffiliationStatus status) = doctorAffiliationStatus[_doctorEmail];
+        // --- *** UPDATED CODE *** ---
+        // Get the doctor's hospital and status from the struct
+        DoctorAffiliationStatus memory affiliation = doctorAffiliationStatus[_doctorEmail];
+        string memory hospitalEmail = affiliation.hospitalEmail;
+        AffiliationStatus status = affiliation.status;
+        
         require(status == AffiliationStatus.Approved, "Doctor is not approved or affiliated");
 
         Appointment memory newAppointment = Appointment({
@@ -251,17 +270,15 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         appointmentsForDoctor[_doctorEmail].push(newAppointment);
         appointmentsForHospital[hospitalEmail].push(newAppointment);
         
-        // Store the index for easy updating
         hospitalAppointmentIndex[_consultingId] = appointmentsForHospital[hospitalEmail].length - 1;
 
-        // Log transaction for the patient
         transactionLogs[_patientEmail].push(TransactionLog({
             timestamp: block.timestamp,
             logType: LogType.AppointmentBooked,
             performedBy: _patientEmail,
             details: string(abi.encodePacked("Booked appointment with ", _doctorName))
         }));
-    emit AppointmentBooked(_patientEmail, block.timestamp, string(abi.encodePacked("Booked appointment with ", _doctorName)));
+        emit AppointmentBooked(_patientEmail, block.timestamp, string(abi.encodePacked("Booked appointment with ", _doctorName)));
     }
 
     function updateAppointmentStatus(
@@ -274,16 +291,13 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         uint index = hospitalAppointmentIndex[_consultingId];
         Appointment storage appointmentToUpdate = appointmentsForHospital[_hospitalEmail][index];
 
-        // Ensure this appointment ID matches
         require(keccak256(abi.encodePacked(appointmentToUpdate.consultingId)) == keccak256(abi.encodePacked(_consultingId)), "Appointment ID mismatch");
 
         appointmentToUpdate.status = _status;
 
-        // This is complex: we must now update the patient and doctor arrays.
-        // This is a limitation of blockchain. For simplicity, we'll assume
-        // the frontend re-fetches or handles this logic.
-        // A more robust contract would have indexes for all arrays.
-
+        // Note: This logic is still simplified. Updating status in patient/doctor
+        // arrays would require more complex indexing.
+        
         emit AppointmentStatusUpdated(_consultingId, _status, block.timestamp);
     }
 
@@ -295,8 +309,11 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
         return users[_email];
     }
 
-    function getDoctorAffiliation(string memory _doctorEmail) public view returns (string memory, AffiliationStatus) {
-        return doctorAffiliationStatus[_doctorEmail];
+    // --- *** UPDATED FUNCTION *** ---
+    // This now returns the two values from the struct, so server.js doesn't need to change
+    function getDoctorAffiliation(string memory _doctorEmail) public view returns (string memory hospitalEmail, AffiliationStatus status) {
+        DoctorAffiliationStatus memory affiliation = doctorAffiliationStatus[_doctorEmail];
+        return (affiliation.hospitalEmail, affiliation.status);
     }
 
     function getAllHospitals() public view returns (User[] memory) {
@@ -326,9 +343,9 @@ event ConsentManaged(string patientId, string granteeId, string status, uint256 
 
     // --- ORIGINAL FUNCTIONS (MODIFIED FOR EMAIL IDs) ---
 
-function addPrescription(
+    function addPrescription(
         string memory _patientEmail,
-        string memory _doctorName,
+        string memory _doctorName, // Should probably be doctorEmail for consistency
         string memory _disease,
         string memory _cid,
         uint256 _timestamp
@@ -336,19 +353,19 @@ function addPrescription(
         records[_patientEmail].push(Prescription({
             doctorName: _doctorName,
             disease: _disease,
-      cid: _cid,
+            cid: _cid,
             timestamp: _timestamp
         }));
-    transactionLogs[_patientEmail].push(TransactionLog({
+        transactionLogs[_patientEmail].push(TransactionLog({
             timestamp: block.timestamp,
             logType: LogType.RecordUpdated,
-            performedBy: _doctorName, // Should be doctor's email
+            performedBy: _doctorName, 
             details: string(abi.encodePacked("Prescription added for disease: ", _disease))
         }));
-    emit RecordUpdated(_patientEmail, _doctorName, block.timestamp, _cid);
+        emit RecordUpdated(_patientEmail, _doctorName, block.timestamp, _cid);
     }
     
-function manageConsent(
+    function manageConsent(
         string memory _patientEmail,
         string memory _granteeEmail,
         string memory _accessLevel,
@@ -358,20 +375,20 @@ function manageConsent(
         consentLog[_patientEmail].push(Consent({
             granteeId: _granteeEmail,
             accessLevel: _accessLevel,
-      duration: _duration,
+            duration: _duration,
             status: _status,
             timestamp: block.timestamp
         }));
-    transactionLogs[_patientEmail].push(TransactionLog({
+        transactionLogs[_patientEmail].push(TransactionLog({
             timestamp: block.timestamp,
             logType: LogType.ConsentGiven,
             performedBy: _patientEmail,
             details: string(abi.encodePacked("Consent ", _status, " for ", _granteeEmail))
         }));
-    emit ConsentManaged(_patientEmail, _granteeEmail, _status, block.timestamp);
+        emit ConsentManaged(_patientEmail, _granteeEmail, _status, block.timestamp);
     }
 
-function logHistoryAccess(string memory _patientEmail, string memory _doctorEmail) public {
+    function logHistoryAccess(string memory _patientEmail, string memory _doctorEmail) public {
         transactionLogs[_patientEmail].push(TransactionLog({
             timestamp: block.timestamp,
             logType: LogType.HistoryAccessed,
@@ -381,15 +398,15 @@ function logHistoryAccess(string memory _patientEmail, string memory _doctorEmai
         emit HistoryAccessed(_patientEmail, _doctorEmail, block.timestamp);
     }
 
-function getHistory(string memory _patientEmail) public view returns (Prescription[] memory) {
+    function getHistory(string memory _patientEmail) public view returns (Prescription[] memory) {
         return records[_patientEmail];
-}
+    }
 
-function getConsentLog(string memory _patientEmail) public view returns (Consent[] memory) {
+    function getConsentLog(string memory _patientEmail) public view returns (Consent[] memory) {
         return consentLog[_patientEmail];
-}
+    }
 
     function getTransactionLog(string memory _patientEmail) public view returns (TransactionLog[] memory) {
         return transactionLogs[_patientEmail];
-}
+    }
 }
