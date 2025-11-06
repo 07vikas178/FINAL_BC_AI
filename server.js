@@ -25,7 +25,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 let ipfs;
 const web3 = new Web3('http://127.0.0.1:7545');
 
-// ⚠️ FULL ABI REQUIRED HERE FOR ALL FUNCTIONS TO WORK ⚠️
+// ⚠️ PASTE YOUR FULL ABI HERE ⚠️
 const contractABI = [
 	{
 		"anonymous": false,
@@ -1455,7 +1455,7 @@ const contractABI = [
 	}
 ];
 
-// ⚠️ UPDATE THESE ADDRESSES & KEYS ⚠️
+// ⚠ UPDATE THESE ADDRESSES & KEYS ⚠
 const contractAddress = '0xc974d485967222bFc9cce5D9ed6Ceb6D4e028bCD';
 const senderAddress = '0xFaABF7C7Ff55D37732F39452695627Cd692dd38A';
 const privateKey = '0x77613fff4214412e3ee3c76fb41f17423bead48b1b5a17d8afbb9de50f115c86';
@@ -1504,7 +1504,7 @@ const sendTransaction = async (method) => {
 async function callGeminiApi(prompt) {
     try {
         if (!process.env.GEMINI_API_KEY) throw new Error("CRITICAL: GEMINI_API_KEY is missing.");
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Updated model name
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
@@ -1595,13 +1595,13 @@ app.post('/api/doctor/login', async (req, res) => {
         if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
         
         const affiliation = await contract.methods.getDoctorAffiliation(email).call({ from: senderAddress });
-        const status = affiliation[1].toString(); 
+        const status = affiliation.status.toString(); // Use named return parameter from struct
 
         if (status === '0') return res.status(403).json({ error: 'Account pending approval.' });
         if (status === '2') return res.status(403).json({ error: 'Account revoked.' });
         if (status !== '1') return res.status(403).json({ error: 'Account not approved.' });
 
-        const hospital = await contract.methods.getUser(affiliation[0]).call({ from: senderAddress });
+        const hospital = await contract.methods.getUser(affiliation.hospitalEmail).call({ from: senderAddress });
         const token = jwt.sign({ email: doctor.email, type: 'doctor', name: doctor.name, hospital_name: hospital.name }, JWT_SECRET, { expiresIn: '1h' });
         res.json({ token });
     } catch (error) { res.status(500).json({ error: 'Login failed: ' + error.message }); }
@@ -1640,17 +1640,14 @@ app.post('/api/hospital/login', async (req, res) => {
 
 // --- PATIENT & APPOINTMENT ROUTES ---
 
-// ✅ ADDED MISSING ROUTE for Book Appointment page
 app.get('/api/doctor-details/:email', authenticateToken, async (req, res) => {
     try {
-        // Fetch user details from blockchain
         const doctorUser = await contract.methods.getUser(req.params.email).call({ from: senderAddress });
-        // Often details are JSON stringified, let's try to parse it safely
         let specialization = 'General';
         try {
              const details = JSON.parse(doctorUser.details || '{}');
              specialization = details.specialization || 'General';
-        } catch (e) { /* ignore parsing error, use default */ }
+        } catch (e) {}
 
         res.json({
             name: doctorUser.name,
@@ -1691,7 +1688,7 @@ app.get('/api/my-patient-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'patient') return res.status(403).json({ error: 'Forbidden' });
     try {
         const appointments = await contract.methods.getAppointmentsForPatient(req.user.email).call({ from: senderAddress });
-        res.json(appointments.map(a => ({ appointment_id: a.consultingId, appointment_time: a.appointmentTime, status: a.status, doctor_name: a.doctorName })).reverse());
+        res.json(appointments.map(a => ({ appointment_id: a.consultingId, consulting_id: a.consultingId, appointment_time: a.appointmentTime, status: a.status, doctor_name: a.doctorName })).reverse());
     } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments' }); }
 });
 
@@ -1700,8 +1697,18 @@ app.get('/api/all-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'hospital') return res.status(403).json({ error: 'Forbidden' });
     try {
         const appointments = await contract.methods.getAppointmentsForHospital(req.user.email).call({ from: senderAddress });
-        res.json(appointments.map(a => ({ ...a, appointment_id: a.consultingId })).reverse());
-    } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments.' }); }
+        res.json(appointments.map(a => ({ 
+            consulting_id: a.consultingId, 
+            patient_name: a.patientName,
+            patient_email: a.patientEmail,
+            doctor_name: a.doctorName,
+            appointment_time: a.appointmentTime,
+            status: a.status
+        })).reverse());
+    } catch (error) { 
+        console.error("Error fetching hospital appointments:", error);
+        res.status(500).json({ error: 'Failed to fetch appointments.' }); 
+    }
 });
 
 app.put('/api/appointments/:consultingId/status', authenticateToken, async (req, res) => {
@@ -1741,7 +1748,7 @@ app.get('/api/my-appointments', authenticateToken, async (req, res) => {
         const appointments = await contract.methods.getAppointmentsForDoctor(req.user.email).call({ from: senderAddress });
         res.json(appointments.filter(a => a.status === 'Approved').map(a => ({
             appointment_id: a.consultingId, consulting_id: a.consultingId, appointment_time: a.appointmentTime,
-            patient_id: a.patientEmail, patient_name: a.patientName, gender: 'N/A' // Gender not in Solidity struct, placeholder
+            patient_id: a.patientEmail, patient_name: a.patientName
         })));
     } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments.' }); }
 });

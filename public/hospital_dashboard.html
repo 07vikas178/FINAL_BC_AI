@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hospital Dashboard - Medi Fusion</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f4f7f6; }
         .dashboard-header { background: white; padding: 1.5rem; border-bottom: 1px solid #eef2f6; margin-bottom: 2rem; }
@@ -17,15 +18,12 @@
         .btn-reject { background-color: #e63946; border: none; color: white; }
         .btn-reject:hover { background-color: #d32f2f; color: white; }
         .table > :not(caption) > * > * { padding: 1rem 0.75rem; vertical-align: middle; }
-        .badge-pending { background-color: #e9c46a; color: #1d3557; }
     </style>
 </head>
 <body>
     <header class="dashboard-header d-flex justify-content-between align-items-center">
         <h1 id="hospital-name">Hospital Dashboard</h1>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-danger" id="logout-btn">Logout</button>
-        </div>
+        <button class="btn btn-outline-danger" id="logout-btn">Logout</button>
     </header>
 
     <div class="container">
@@ -78,23 +76,15 @@
         </div>
 
         <div class="row mt-5">
-            <div class="col-12">
-                <h3 class="mb-3 text-secondary">Doctor Management</h3>
-            </div>
+            <div class="col-12"><h3 class="mb-3 text-secondary">Doctor Management</h3></div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-info-subtle">
-                        👨‍⚕️ Pending Doctor Registrations
-                    </div>
+                    <div class="card-header bg-info-subtle">👨‍⚕️ Pending Doctor Registrations</div>
                     <div class="card-body p-0">
                          <div class="table-responsive" style="max-height: 300px;">
                             <table class="table mb-0">
-                                <thead class="table-light sticky-top">
-                                    <tr><th>Doctor</th><th>Action</th></tr>
-                                </thead>
-                                <tbody id="pending-doctors-body">
-                                    <tr><td colspan="2" class="p-3 text-center">Loading...</td></tr>
-                                </tbody>
+                                <thead class="table-light sticky-top"><tr><th>Doctor</th><th>Action</th></tr></thead>
+                                <tbody id="pending-doctors-body"><tr><td colspan="2" class="p-3 text-center">Loading...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -102,18 +92,12 @@
             </div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header">
-                        ✅ Active Doctors
-                    </div>
+                    <div class="card-header">✅ Active Doctors</div>
                     <div class="card-body p-0">
                         <div class="table-responsive" style="max-height: 300px;">
                             <table class="table mb-0">
-                                <thead class="table-light sticky-top">
-                                    <tr><th>Name</th><th>Specialization</th><th>Status</th></tr>
-                                </thead>
-                                <tbody id="approved-doctors-body">
-                                    <tr><td colspan="3" class="p-3 text-center">Loading...</td></tr>
-                                </tbody>
+                                <thead class="table-light sticky-top"><tr><th>Name</th><th>Specialization</th><th>Status</th></tr></thead>
+                                <tbody id="approved-doctors-body"><tr><td colspan="3" class="p-3 text-center">Loading...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -130,10 +114,9 @@
 
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                document.getElementById('hospital-name').textContent = payload.name;
+                document.getElementById('hospital-name').textContent = payload.name + " Dashboard";
             } catch (e) { console.error("Token error:", e); }
 
-            // Load data
             loadAppointments();
             loadDoctors();
 
@@ -148,6 +131,8 @@
             fetch('/api/all-appointments', { headers: { 'Authorization': `Bearer ${token}` }})
             .then(res => res.json())
             .then(data => {
+                console.log("Appointments Data Received:", data); // DEBUGGING LOG
+
                 const pendingBody = document.getElementById('pending-appointments-body');
                 const historyBody = document.getElementById('history-appointments-body');
                 const pendingCountEl = document.getElementById('pending-count');
@@ -156,20 +141,25 @@
                 historyBody.innerHTML = '';
                 let pendingCount = 0;
 
-                if (data.length === 0) {
-                    pendingBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">No pending appointments.</td></tr>';
-                    historyBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-muted">No appointment history.</td></tr>';
+                if (!data || data.length === 0) {
+                    pendingBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">No pending appointments found.</td></tr>';
+                    historyBody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-muted">No appointment history found.</td></tr>';
+                    pendingCountEl.textContent = 0;
                     return;
                 }
 
                 data.forEach(app => {
-                    const date = new Date(app.appointment_time).toLocaleString();
-                    if (app.status === 'Pending') {
+                    // Safely handle date parsing
+                    let dateStr = 'Invalid Date';
+                    try { dateStr = new Date(app.appointment_time).toLocaleString(); } catch(e) {}
+
+                    // Robust case-insensitive check for 'pending'
+                    if (app.status && app.status.toLowerCase() === 'pending') {
                         pendingCount++;
                         pendingBody.innerHTML += `
                             <tr id="row-${app.consulting_id}">
-                                <td class="fw-bold">${date}</td>
-                                <td>${app.patient_name}<br><small class="text-muted">${app.patient_email || ''}</small></td>
+                                <td class="fw-bold">${dateStr}</td>
+                                <td>${app.patient_name}</td>
                                 <td>Dr. ${app.doctor_name}</td>
                                 <td><small class="font-monospace">${app.consulting_id}</small></td>
                                 <td class="text-end">
@@ -178,10 +168,14 @@
                                 </td>
                             </tr>`;
                     } else {
-                        let badgeClass = app.status === 'Approved' ? 'bg-success' : 'bg-danger';
+                        // History Table
+                        let badgeClass = 'bg-secondary';
+                        if (app.status.toLowerCase() === 'approved') badgeClass = 'bg-success';
+                        if (app.status.toLowerCase() === 'rejected') badgeClass = 'bg-danger';
+
                         historyBody.innerHTML += `
                             <tr>
-                                <td>${date}</td>
+                                <td>${dateStr}</td>
                                 <td>${app.patient_name}</td>
                                 <td>Dr. ${app.doctor_name}</td>
                                 <td><span class="badge ${badgeClass}">${app.status}</span></td>
@@ -191,10 +185,13 @@
 
                 pendingCountEl.textContent = pendingCount;
                 if (pendingCount === 0) {
-                    pendingBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">No pending appointments right now.</td></tr>';
+                     pendingBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">No new requests at this time.</td></tr>';
                 }
             })
-            .catch(err => console.error("Failed to load appointments:", err));
+            .catch(err => {
+                console.error("Failed to load appointments:", err);
+                document.getElementById('pending-appointments-body').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data. Check console.</td></tr>';
+            });
         }
 
         function updateStatus(id, status) {
@@ -202,40 +199,42 @@
             
             fetch(`/api/appointments/${id}/status`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                 body: JSON.stringify({ status })
             })
             .then(res => res.json())
             .then(data => {
                 alert(data.message);
-                loadAppointments(); // Reload to update lists
+                loadAppointments(); // Reload lists
             })
             .catch(err => alert("Action failed: " + err.message));
         }
 
         function loadDoctors() {
-            fetch('/api/hospital/doctors', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }})
+             const token = localStorage.getItem('token');
+             fetch('/api/hospital/doctors', { headers: { 'Authorization': `Bearer ${token}` }})
             .then(res => res.json())
             .then(doctors => {
+                console.log("Doctors Data Received:", doctors); // DEBUGGING LOG
                 const pendingBody = document.getElementById('pending-doctors-body');
                 const approvedBody = document.getElementById('approved-doctors-body');
                 pendingBody.innerHTML = '';
                 approvedBody.innerHTML = '';
+                let pCount = 0, aCount = 0;
 
                 doctors.forEach(doc => {
                     if (doc.status === 'Pending') {
+                        pCount++;
                         pendingBody.innerHTML += `
                             <tr>
-                                <td><strong>${doc.name}</strong><br><small>${doc.specialization}</small></td>
+                                <td><strong>${doc.name}</strong><br><small class="text-muted">${doc.specialization}</small></td>
                                 <td>
                                     <button onclick="doctorAction('${doc.doctor_email}', 'Approved')" class="btn btn-sm btn-success mb-1">Approve</button>
                                     <button onclick="doctorAction('${doc.doctor_email}', 'Rejected')" class="btn btn-sm btn-outline-danger">Reject</button>
                                 </td>
                             </tr>`;
                     } else if (doc.status === 'Approved') {
+                        aCount++;
                         approvedBody.innerHTML += `
                             <tr>
                                 <td>${doc.name}</td>
@@ -245,9 +244,10 @@
                     }
                 });
 
-                if (pendingBody.innerHTML === '') pendingBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted p-3">No pending registrations.</td></tr>';
-                if (approvedBody.innerHTML === '') approvedBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-3">No active doctors.</td></tr>';
-            });
+                if (pCount === 0) pendingBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted p-3">No pending registrations.</td></tr>';
+                if (aCount === 0) approvedBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-3">No active doctors.</td></tr>';
+            })
+            .catch(err => console.error("Failed to load doctors:", err));
         }
 
         window.doctorAction = function(email, status) {
@@ -255,7 +255,7 @@
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                 body: JSON.stringify({ status })
-            }).then(() => loadDoctors());
+            }).then(res => res.json()).then(data => { alert(data.message); loadDoctors(); });
         };
     </script>
 </body>
