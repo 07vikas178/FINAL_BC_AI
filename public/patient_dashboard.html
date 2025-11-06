@@ -15,428 +15,253 @@
     .btn-book:hover { background-color: #264653; border-color: #264653; }
     #welcome-message { font-size: 1.25rem; }
     .card-title { font-weight: 600; }
-    #hospital-name-display { color: #007bff; }
-    .back-link { font-weight: 600; }
-    .header-actions { gap: 10px; }
-    .prescription-card { white-space: pre-wrap; background-color: #e9ecef; }
   </style>
 </head>
 <body>
-  <div class="container py-5">
-    <div class="dashboard-header d-flex justify-content-between align-items-start mb-4">
-      <div>
-          <h1>Patient Dashboard</h1>
-          <p id="welcome-message" class="text-secondary"></p>
-      </div>
-      <div class="header-actions d-flex align-items-center">
-          <button id="view-prescriptions-btn" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#prescriptionsModal">View Prescriptions</button>
-          <button id="manage-consent-btn" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#consentModal">Manage Consent 🔐</button>
-          <button id="my-appointments-btn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointmentsModal">My Appointments</button>
-          <button id="view-transaction-btn" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#transactionModal">View Transaction</button>
-          <button id="logout-btn" class="btn btn-danger">Logout</button>
-      </div>
-    </div>
+  <div class="container-fluid py-4">
+    <header class="dashboard-header d-flex justify-content-between align-items-center mb-5 px-3">
+      <h1 class="h3"><span id="welcome-message">Welcome, Patient</span></h1>
+      <button id="logout-btn" class="btn btn-outline-danger">Logout</button>
+    </header>
 
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="card-title mb-0">Available Doctors at <span id="hospital-name-display"></span></h2>
-            <a href="/hospitals_list.html" class="back-link">&larr; Change Hospital</a>
-        </div>
-        
-        <div class="table-responsive">
-          <table class="table table-hover" id="doctorsTable">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Doctor Name</th>
-                <th scope="col">Specialization</th>
-                <th scope="col">Status</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-            <tbody id="doctors-table-body">
-              </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="prescriptionsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">My Prescriptions</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="accordion" id="prescriptionsAccordion">
+    <div class="row px-3">
+      <div class="col-lg-8 mb-4">
+         <div class="card mb-4">
+          <div class="card-header bg-transparent border-0 pt-4 ps-4">
+            <h5 class="card-title text-primary"><i class="bi bi-calendar-event me-2"></i>Your Appointments</h5>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="appointmentsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">My Appointments</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <table class="table">
-            <thead> <tr> <th scope="col">Doctor Name</th> <th scope="col">Appointment Time</th> <th scope="col">Status</th> </tr> </thead>
-            <tbody id="appointments-list-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="consentModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Consent Management Log 🔐</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md-4">
-              <h4>Grant New Consent</h4>
-              <form id="grant-consent-form">
-                <div class="mb-3">
-                  <label for="granteeId" class="form-label">Doctor/Institution ID</label>
-                  <input type="text" class="form-control" id="granteeId" required placeholder="Enter the Doctor's ID">
-                </div>
-                <div class="mb-3">
-                  <label for="accessLevel" class="form-label">Access Level</label>
-                  <select class="form-select" id="accessLevel" required>
-                    <option value="View Full History">View Full History</option>
-                    <option value="View Prescriptions Only">View Prescriptions Only</option>
-                  </select>
-                </div>
-                  <div class="mb-3">
-                  <label for="duration" class="form-label">Duration</label>
-                  <select class="form-select" id="duration" required>
-                    <option value="86400">1 Day (86400s)</option>
-                    <option value="604800">7 Days (604800s)</option>
-                    <option value="2592000">30 Days (2592000s)</option>
-                  </select>
-                </div>
-                <button type="submit" class="btn btn-success w-100">Grant Access</button>
-              </form>
-              <div id="consent-message" class="mt-3"></div>
-            </div>
-            <div class="col-md-8">
-              <h4>Consent History</h4>
-              <div class="table-responsive" style="max-height: 50vh;">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Grantee ID</th>
-                      <th>Status</th>
-                      <th>Duration</th>
-                      <th>Timestamp</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="consent-log-body"></tbody>
-                </table>
-              </div>
+          <div class="card-body">
+             <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr><th>Date & Time</th><th>Doctor</th><th>Status</th><th>ID</th></tr>
+                </thead>
+                <tbody id="appointments-body"></tbody>
+              </table>
             </div>
           </div>
         </div>
+
+        <div class="card">
+            <div class="card-header bg-transparent border-0 pt-4 ps-4 d-flex justify-content-between align-items-center">
+                <h5 class="card-title text-success"><i class="bi bi-file-medical me-2"></i>Medical History</h5>
+            </div>
+            <div class="card-body">
+                 <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="medical-history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-transparent border-0 pt-4 ps-4">
+               <h5 class="card-title text-info">Book an Appointment</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="hospital-select" class="form-label fw-bold">1. Select a Hospital:</label>
+                    <select id="hospital-select" class="form-select">
+                        <option value="">-- Choose Hospital --</option>
+                        </select>
+                </div>
+
+                <label class="form-label fw-bold mt-2">2. Available Doctors:</label>
+                <div id="doctors-list" class="list-group list-group-flush border rounded overflow-auto" style="max-height: 300px;">
+                    <div class="text-center p-3 text-muted">Please select a hospital first.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-transparent border-0 pt-4 ps-4">
+                 <h5 class="card-title text-secondary">Activity Log</h5>
+            </div>
+             <div class="card-body p-0">
+                 <div class="table-responsive" style="max-height: 300px;">
+                     <table class="table table-sm table-striped mb-0" style="font-size: 0.85rem;">
+                         <thead class="table-light sticky-top">
+                             <tr><th>Time</th><th>Type</th><th>By</th><th>Details</th></tr>
+                         </thead>
+                         <tbody id="transaction-log-body"></tbody>
+                     </table>
+                 </div>
+             </div>
+        </div>
       </div>
     </div>
   </div>
-  
-  <div class="modal fade" id="transactionModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Transaction Log</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <th>Event Type</th>
-                            <th>Performed By</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transaction-log-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/patient_login.html';
-            return;
-        }
+        if (!token) { window.location.href = '/patient_login.html'; return; }
 
-        const params = new URLSearchParams(window.location.search);
-        const hospitalName = params.get('hospital');
-
-        if (!hospitalName) {
-            alert('No hospital was selected. Redirecting you to the selection page.');
-            window.location.href = '/hospitals_list.html';
-            return;
-        }
-        
-        document.getElementById('hospital-name-display').textContent = decodeURIComponent(hospitalName);
-        let patientPayload;
         try {
-            patientPayload = JSON.parse(atob(token.split('.')[1]));
-            document.getElementById('welcome-message').textContent = `Welcome, ${patientPayload.name}!`;
-        } catch (e) {
-            localStorage.removeItem('token');
-            window.location.href = '/patient_login.html';
-        }
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            document.getElementById('welcome-message').textContent = `Welcome, ${payload.name}`;
+        } catch (e) { console.error("Token error:", e); }
 
-        fetch(`/api/available-doctors?hospital=${hospitalName}`, { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(response => response.ok ? response.json() : Promise.reject('Failed to load doctor data.'))
-        .then(doctors => {
-            const tableBody = document.getElementById('doctors-table-body');
-            tableBody.innerHTML = '';
-            if (doctors.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No doctors are currently available at this hospital.</td></tr>';
-            } else {
-                doctors.forEach(doctor => {
-                    const row = `
-                        <tr>
-                            <td>Dr. ${doctor.name} (ID: ${doctor.doctor_id})</td>
-                            <td>${doctor.specialization}</td>
-                            <td><span class="badge bg-success">Available</span></td>
-                            <td><a href="/book_appointment.html?doctor_id=${doctor.doctor_id}&hospital=${hospitalName}" class="btn btn-book btn-sm text-white">Book Appointment</a></td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
-            }
-        })
-        .catch(error => {
-            document.getElementById('doctors-table-body').innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error}</td></tr>`;
-        });
-        
-        // --- [NEW] View Prescriptions Button Logic ---
-        document.getElementById('view-prescriptions-btn').addEventListener('click', () => {
-            const accordion = document.getElementById('prescriptionsAccordion');
-            accordion.innerHTML = '<p class="text-center">Loading prescriptions...</p>';
+        // --- INITIAL LOAD ---
+        loadHospitals(); // Load hospitals first
+        loadAppointments();
+        loadMedicalHistory();
+        loadTransactionLog();
 
-            fetch('/api/my-prescriptions', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => {
-                if (!res.ok) throw new Error('Could not fetch prescriptions.');
-                return res.json();
-            })
-            .then(prescriptions => {
-                accordion.innerHTML = '';
-                if (prescriptions.length === 0) {
-                    accordion.innerHTML = '<p class="text-center text-muted">You have no prescriptions on record.</p>';
-                    return;
-                }
-                prescriptions.forEach((p, index) => {
-                    const date = new Date(Number(p.timestamp)).toLocaleString();
-                    const item = `
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="heading-${index}">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${index}">
-                                    <strong>${p.disease}</strong>&nbsp;- Prescribed by Dr. ${p.doctorName} on ${date}
-                                </button>
-                            </h2>
-                            <div id="collapse-${index}" class="accordion-collapse collapse" data-bs-parent="#prescriptionsAccordion">
-                                <div class="accordion-body">
-                                    <pre class="p-3 rounded prescription-card"><code>${p.data}</code></pre>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    accordion.innerHTML += item;
-                });
-            })
-            .catch(err => {
-                accordion.innerHTML = `<p class="text-center text-danger">${err.message}</p>`;
-            });
-        });
-
-        document.getElementById('my-appointments-btn').addEventListener('click', () => {
-           const appointmentsBody = document.getElementById('appointments-list-body');
-           appointmentsBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading appointments...</td></tr>';
-           fetch('/api/my-patient-appointments', {
-               headers: { 'Authorization': `Bearer ${token}` }
-           })
-           .then(res => {
-               if (!res.ok) { throw new Error('Failed to fetch appointments.'); }
-               return res.json();
-           })
-           .then(appointments => {
-               appointmentsBody.innerHTML = '';
-               if (appointments.length === 0) {
-                   appointmentsBody.innerHTML = '<tr><td colspan="3" class="text-center">You have no appointments.</td></tr>';
-               } else {
-                   appointments.forEach(app => {
-                       const statusBadge = app.status === 'Approved' ? 'bg-success' : (app.status === 'Pending' ? 'bg-warning' : 'bg-danger');
-                       const row = `
-                           <tr>
-                               <td>Dr. ${app.doctor_name}</td>
-                               <td>${new Date(app.appointment_time).toLocaleString()}</td>
-                               <td><span class="badge ${statusBadge}">${app.status}</span></td>
-                           </tr>
-                       `;
-                       appointmentsBody.innerHTML += row;
-                   });
-               }
-           })
-           .catch(error => {
-               appointmentsBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;
-           });
-        });
-
-        // --- Consent Management Logic ---
-        const consentModal = document.getElementById('consentModal');
-        consentModal.addEventListener('show.bs.modal', fetchConsentLog);
-        
-        async function fetchConsentLog() {
-          const logBody = document.getElementById('consent-log-body');
-          logBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
-          try {
-            const res = await fetch('/api/consent-log', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (!res.ok) throw new Error('Failed to fetch consent log.');
-            const data = await res.json();
-            logBody.innerHTML = '';
-            if (!data.log || data.log.length === 0) {
-              logBody.innerHTML = '<tr><td colspan="5" class="text-center">No consent history found.</td></tr>';
-              return;
-            }
-            data.log.slice().reverse().forEach(entry => {
-              const statusBadge = entry.status === 'Granted' ? 'bg-success' : 'bg-danger';
-              const grantTime = new Date(Number(entry.timestamp) * 1000).toLocaleString();
-              const durationText = `${Number(entry.duration) / 86400} Day(s)`;
-              const row = `
-                <tr>
-                  <td>${entry.granteeId}</td>
-                  <td><span class="badge ${statusBadge}">${entry.status}</span></td>
-                  <td>${durationText}</td>
-                  <td>${grantTime}</td>
-                  <td>
-                    ${entry.status === 'Granted' ? `<button class="btn btn-danger btn-sm revoke-btn" data-grantee-id="${entry.granteeId}" data-access-level="${entry.accessLevel}">Revoke</button>` : ''}
-                  </td>
-                </tr>
-              `;
-              logBody.innerHTML += row;
-            });
-          } catch(err) {
-            logBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${err.message}</td></tr>`;
-          }
-        }
-
-        document.getElementById('grant-consent-form').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const msgDiv = document.getElementById('consent-message');
-          msgDiv.innerHTML = '';
-          const body = {
-            granteeId: document.getElementById('granteeId').value,
-            accessLevel: document.getElementById('accessLevel').value,
-            duration: document.getElementById('duration').value,
-            status: 'Granted'
-          };
-          try {
-            const res = await fetch('/api/consent', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to grant consent.');
-            msgDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-            e.target.reset();
-            fetchConsentLog(); 
-          } catch (err) {
-            msgDiv.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
-          }
-        });
-        
-        document.getElementById('consent-log-body').addEventListener('click', async (e) => {
-            if (e.target && e.target.classList.contains('revoke-btn')) {
-                const button = e.target;
-                const granteeId = button.dataset.granteeId;
-                const accessLevel = button.dataset.accessLevel;
-                if (!confirm(`Are you sure you want to revoke access for Grantee ID: ${granteeId}?`)) return;
-                const msgDiv = document.getElementById('consent-message');
-                msgDiv.innerHTML = '';
-                const body = {
-                    granteeId: granteeId,
-                    accessLevel: accessLevel, 
-                    duration: 0, 
-                    status: 'Revoked'
-                };
-                try {
-                    const res = await fetch('/api/consent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(body)
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Failed to revoke consent.');
-                    msgDiv.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
-                    fetchConsentLog();
-                } catch (err) {
-                    msgDiv.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
-                }
-            }
-        });
-        
-        document.getElementById('view-transaction-btn').addEventListener('click', () => {
-            const logBody = document.getElementById('transaction-log-body');
-            logBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading transaction log...</td></tr>';
-            fetch('/api/transaction-log', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => {
-                if (!res.ok) { throw new Error('Failed to fetch transaction log.'); }
-                return res.json();
-            })
-            .then(data => {
-                logBody.innerHTML = '';
-                if (!data.log || data.log.length === 0) {
-                    logBody.innerHTML = '<tr><td colspan="4" class="text-center">No transaction history found.</td></tr>';
-                    return;
-                }
-                const logTypeMap = ['AppointmentBooked', 'HistoryAccessed', 'RecordUpdated', 'ConsentGiven'];
-                data.log.slice().reverse().forEach(entry => {
-                    const row = `
-                        <tr>
-                            <td>${new Date(Number(entry.timestamp) * 1000).toLocaleString()}</td>
-                            <td>${logTypeMap[entry.logType]}</td>
-                            <td>${entry.performedBy}</td>
-                            <td>${entry.details}</td>
-                        </tr>
-                    `;
-                    logBody.innerHTML += row;
-                });
-            })
-            .catch(error => {
-                logBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
-            });
+        // --- EVENT LISTENERS ---
+        document.getElementById('hospital-select').addEventListener('change', (e) => {
+            loadDoctors(e.target.value);
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
             localStorage.removeItem('token');
             window.location.href = '/index.html';
         });
+
+        // --- FUNCTIONS ---
+
+        function loadHospitals() {
+            fetch('/api/hospitals', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.json())
+            .then(hospitals => {
+                const select = document.getElementById('hospital-select');
+                hospitals.forEach(h => {
+                    const option = document.createElement('option');
+                    option.value = h.id; // This is the hospital's email
+                    option.textContent = h.hospital_name;
+                    select.appendChild(option);
+                });
+
+                // Check URL for pre-selected hospital (when coming back from booking page)
+                const urlParams = new URLSearchParams(window.location.search);
+                const preSelectedInfo = urlParams.get('hospital_email');
+                if (preSelectedInfo) {
+                    select.value = preSelectedInfo;
+                    loadDoctors(preSelectedInfo);
+                }
+            })
+            .catch(err => console.error("Failed to load hospitals:", err));
+        }
+
+        function loadDoctors(hospitalEmail) {
+            const listContainer = document.getElementById('doctors-list');
+            if (!hospitalEmail) {
+                listContainer.innerHTML = '<div class="text-center p-3 text-muted">Please select a hospital first.</div>';
+                return;
+            }
+
+            listContainer.innerHTML = '<div class="text-center p-3">Loading doctors...</div>';
+
+            // Pass the selected hospital email to the API
+            fetch(`/api/available-doctors?hospital_email=${encodeURIComponent(hospitalEmail)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(doctors => {
+                listContainer.innerHTML = '';
+                if (doctors.length === 0) {
+                    listContainer.innerHTML = '<div class="text-center p-3 text-muted">No doctors available at this hospital right now.</div>';
+                    return;
+                }
+                doctors.forEach(doc => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    // Pass both doctor ID and hospital email to the booking page
+                    item.innerHTML = `
+                        <div>
+                            <div class="fw-bold">${doc.name}</div>
+                            <div class="small text-muted">${doc.specialization}</div>
+                        </div>
+                        <a href="/book_appointment.html?doctorId=${doc.doctor_id}&hospitalEmail=${encodeURIComponent(hospitalEmail)}" class="btn btn-sm btn-book text-white">Book</a>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                listContainer.innerHTML = '<div class="text-danger p-3 text-center">Failed to load doctors.</div>';
+            });
+        }
+
+        function loadAppointments() {
+            fetch('/api/my-patient-appointments', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('appointments-body');
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No appointments found.</td></tr>';
+                    return;
+                }
+                data.forEach(app => {
+                    let statusClass = app.status === 'Approved' ? 'bg-success' : (app.status === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark');
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${new Date(app.appointment_time).toLocaleString()}</td>
+                            <td>Dr. ${app.doctor_name}</td>
+                            <td><span class="badge ${statusClass}">${app.status}</span></td>
+                            <td><small class="text-muted">${app.appointment_id.substring(0, 8)}...</small></td>
+                        </tr>`;
+                });
+            });
+        }
+
+        function loadMedicalHistory() {
+            fetch('/api/my-prescriptions', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('medical-history-body');
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No medical records found.</td></tr>';
+                     return;
+                }
+                data.forEach((rec, index) => {
+                     tbody.innerHTML += `
+                        <tr>
+                            <td>${new Date(Number(rec.timestamp)).toLocaleDateString()}</td>
+                            <td>Dr. ${rec.doctorName}</td>
+                            <td>${rec.disease}</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="viewPrescription(${index})">View</button></td>
+                        </tr>`;
+                });
+                window.prescriptions = data; 
+            });
+        }
+
+        window.viewPrescription = function(index) {
+            const rec = window.prescriptions[index];
+            localStorage.setItem('current_prescription', JSON.stringify(rec));
+            window.location.href = '/view_document.html';
+        };
+
+        function loadTransactionLog() {
+            fetch('/api/transaction-log', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('transaction-log-body');
+                tbody.innerHTML = '';
+                if (!data.log || data.log.length === 0) {
+                     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No activity yet.</td></tr>'; return;
+                }
+                const typeMap = ['Booked', 'Accessed', 'Updated', 'Consent'];
+                data.log.slice().reverse().forEach(log => {
+                    tbody.innerHTML += `<tr>
+                        <td>${new Date(Number(log.timestamp) * 1000).toLocaleDateString()}</td>
+                        <td><span class="badge bg-secondary">${typeMap[log.logType] || 'Log'}</span></td>
+                        <td class="text-truncate" style="max-width: 100px;" title="${log.performedBy}">${log.performedBy}</td>
+                        <td class="text-truncate" style="max-width: 150px;" title="${log.details}">${log.details}</td>
+                    </tr>`;
+                });
+            });
+        }
     });
   </script>
 </body>

@@ -38,130 +38,131 @@
         }
         .doctor-info p {
             margin: 0.5rem 0;
-            font-size: 1.1rem;
+            color: #555;
         }
         .doctor-info strong {
-            color: #343a40;
+            color: #333;
         }
         label {
             display: block;
-            margin-bottom: 0.75rem;
-            color: #495057;
+            margin-bottom: 0.5rem;
+            color: #555;
             font-weight: 600;
             text-align: left;
         }
         input[type="datetime-local"] {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ced4da;
-            border-radius: 8px;
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
             font-size: 1rem;
+            color: #333;
+            margin-bottom: 2rem;
             box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.3s;
         }
         input[type="datetime-local"]:focus {
+            border-color: #0d6efd;
             outline: none;
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
         }
-        button {
+        .btn-confirm {
             width: 100%;
-            padding: 14px 0;
-            margin-top: 1.5rem;
-            background: #0d6efd;
-            border: none;
+            padding: 14px;
+            background-color: #0d6efd;
             color: white;
+            border: none;
+            border-radius: 10px;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        button:hover {
+        .btn-confirm:hover {
             background-color: #0b5ed7;
         }
         .back-link {
             display: inline-block;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             color: #6c757d;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
         }
         .back-link:hover {
-            text-decoration: underline;
+            color: #333;
         }
-        .error-message {
+        #error-message {
             color: #dc3545;
             background-color: #f8d7da;
-            border: 1px solid #f5c2c7;
-            border-radius: 8px;
             padding: 10px;
-            margin-top: 1rem;
-            display: none; /* Hidden by default */
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Book Appointment</h2>
+        <h2>Confirm Appointment</h2>
+        <div id="error-message"></div>
+        
         <div class="doctor-info">
-            <p><strong>Name:</strong> <span id="doctor-name">loading...</span></p>
-            <p><strong>Specialization:</strong> <span id="doctor-specialization">loading...</span></p>
+            <p><strong>Doctor:</strong> <span id="doctor-name">Loading...</span></p>
+            <p><strong>Specialization:</strong> <span id="doctor-specialization">Loading...</span></p>
         </div>
-        <form id="appointment-form">
-            <label for="appointment_time">Select Appointment Date & Time:</label>
-            <input type="datetime-local" id="appointment_time" name="appointment_time" required>
-            <button type="submit">Book Appointment</button>
+
+        <form id="booking-form">
+            <label for="appointment-time">Select Date & Time:</label>
+            <input type="datetime-local" id="appointment-time" name="appointment-time" required>
+            <button type="submit" class="btn-confirm">Confirm Booking</button>
         </form>
-        <div id="error-message" class="error-message"></div>
-        <a href="/patient_dashboard.html" class="back-link">&larr; Back to Dashboard</a>
+
+        <a href="#" id="back-link" class="back-link">Cancel and Go Back</a>
     </div>
 
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/patient_login.html';
-        }
-
         const urlParams = new URLSearchParams(window.location.search);
-        const doctorId = urlParams.get('doctor_id');
-        // --- NEW: Get the hospital name from the URL ---
-        const hospitalName = urlParams.get('hospital');
-        
+        const doctorId = urlParams.get('doctorId');
+        const hospitalEmail = urlParams.get('hospitalEmail'); // Get the hospital email from URL
         const doctorNameEl = document.getElementById('doctor-name');
         const doctorSpecEl = document.getElementById('doctor-specialization');
-        const appointmentForm = document.getElementById('appointment-form');
         const errorMessageEl = document.getElementById('error-message');
-        const backLink = document.querySelector('.back-link');
 
-        // --- NEW: Update the back link to include the hospital name ---
-        if (hospitalName) {
-            backLink.href = `/patient_dashboard.html?hospital=${hospitalName}`;
+        // Set the back link to return to dashboard with the hospital still selected
+        const backLink = document.getElementById('back-link');
+        if (hospitalEmail) {
+            backLink.href = `/patient_dashboard.html?hospital_email=${encodeURIComponent(hospitalEmail)}`;
+        } else {
+            backLink.href = '/patient_dashboard.html';
         }
 
+        // Fetch Doctor Details
         async function fetchDoctorDetails() {
+            const token = localStorage.getItem('token');
             try {
                 const response = await fetch(`/api/doctor-details/${doctorId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch doctor details');
-                }
+                if (!response.ok) throw new Error('Failed to fetch doctor details');
                 const doctor = await response.json();
-                doctorNameEl.textContent = "Dr. " + doctor.name;
+                doctorNameEl.textContent = 'Dr. ' + doctor.name;
                 doctorSpecEl.textContent = doctor.specialization;
             } catch (error) {
-                console.error('Error:', error);
-                doctorNameEl.textContent = 'Error loading doctor details';
-                doctorSpecEl.textContent = 'Please go back and try again.';
+                doctorNameEl.textContent = 'Error loading details';
+                doctorSpecEl.textContent = '-';
+                errorMessageEl.textContent = error.message;
+                errorMessageEl.style.display = 'block';
             }
         }
 
-        appointmentForm.addEventListener('submit', async (e) => {
+        // Handle Booking Submission
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            errorMessageEl.style.display = 'none';
+            const appointmentTime = document.getElementById('appointment-time').value;
+            // We also need the doctor's name for the blockchain record
+            const doctorName = doctorNameEl.textContent.replace('Dr. ', '');
+            const token = localStorage.getItem('token');
 
-            const appointmentTime = document.getElementById('appointment_time').value;
+            errorMessageEl.style.display = 'none';
 
             try {
                 const response = await fetch('/api/appointments', {
@@ -171,7 +172,8 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        doctor_id: doctorId,
+                        doctor_email: doctorId, // In new system, doctorId IS the email
+                        doctor_name: doctorName,
                         appointment_time: appointmentTime
                     })
                 });
@@ -184,11 +186,11 @@
                 
                 alert(result.message);
                 
-                // --- MODIFIED: Redirect back to the dashboard WITH the hospital name ---
-                if (hospitalName) {
-                    window.location.href = `/patient_dashboard.html?hospital=${hospitalName}`;
+                // Redirect back to dashboard, keeping the hospital selected
+                if (hospitalEmail) {
+                    window.location.href = `/patient_dashboard.html?hospital_email=${encodeURIComponent(hospitalEmail)}`;
                 } else {
-                    window.location.href = '/patient_dashboard.html'; // Fallback
+                    window.location.href = '/patient_dashboard.html';
                 }
 
             } catch (error) {
