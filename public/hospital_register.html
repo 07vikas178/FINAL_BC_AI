@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hospital Registration - Medi Fusion</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 600px;
+    }
+    h1 { text-align: center; color: #333; margin-bottom: 30px; }
+    label { font-weight: 600; color: #666; display: block; margin-bottom: 8px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 20px;
+      border: 2px solid #eee;
+      border-radius: 14px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #764ba2, #667eea);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+    }
+     .back-link {
+      display: block;
+      color: #333;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 20px;
+      text-align: center;
+    }
+    #message {
+        margin-bottom: 1em;
+        padding: 1em;
+        border-radius: 5px;
+        display: none;
+        text-align: center;
+    }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hospital Registration</h1>
+    <form id="register-form">
+        <div id="message"></div>
+      <label for="hospital_name">Hospital Name:</label>
+      <input type="text" id="hospital_name" name="hospital_name" required />
+
+      <label for="email">Contact Email:</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required />
+
+      <label for="phone">Contact Phone:</label>
+      <input type="tel" id="phone" name="phone" required />
+
+      <label for="address">Address:</label>
+      <textarea id="address" name="address" rows="3" required></textarea>
+
+      <label for="num_beds">Number of Beds:</label>
+      <input type="number" id="num_beds" name="num_beds" min="1" required />
+
+      <label for="specialties">Specialties Offered:</label>
+      <input type="text" id="specialties" name="specialties" required />
+
+      <button type="submit">Register Hospital</button>
+    </form>
+    <a href="/index.html" class="back-link">Back to Home</a>
+  </div>
+
+  <script>
+       document.getElementById('register-form').addEventListener('submit', async (event) => {
+          event.preventDefault();
+          
+          const form = event.target;
+          const formData = new FormData(form);
+          const data = Object.fromEntries(formData.entries());
+          const messageDiv = document.getElementById('message');
+
+          try {
+              const response = await fetch('/api/hospital/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data)
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
+                  messageDiv.textContent = 'Registration successful! Please log in.';
+                  messageDiv.className = 'success';
+                  form.reset();
+                   setTimeout(() => {
+                      window.location.href = '/hospital_login.html';
+                  }, 2000);
+              } else {
+                  messageDiv.textContent = result.error || 'Registration failed.';
+                  messageDiv.className = 'error';
+              }
+              messageDiv.style.display = 'block';
+
+          } catch (error) {
+              console.error('Registration error:', error);
+              messageDiv.textContent = 'An error occurred. Please try again.';
+              messageDiv.className = 'error';
+              messageDiv.style.display = 'block';
+          }
+      });
+  </script>
+</body>
+</html>

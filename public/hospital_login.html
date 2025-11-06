@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hospital Login - Medi Fusion</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px 35px;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      max-width: 420px;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 40px;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 2px solid #bccad6;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #764ba2, #667eea);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+    }
+    .back-link {
+      display: block;
+      color: #333;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 20px;
+      text-align: center;
+    }
+     #message {
+        margin-top: 1em;
+        padding: 1em;
+        border-radius: 5px;
+        display: none;
+        text-align: center;
+    }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hospital Login</h1>
+    <form id="hospital-login-form">
+      <label for="email">Hospital Email:</label>
+      <input type="email" id="email" name="email" placeholder="Enter hospital email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" placeholder="Enter password" required />
+
+      <button type="submit">Login</button>
+      <p class="error-message" id="error-message"></p>
+    </form>
+    <div id="message"></div>
+    <a href="/index.html" class="back-link">Back to Home</a>
+  </div>
+
+  <script>
+    document.getElementById('hospital-login-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.style.display = 'none';
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch('/api/hospital/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Login failed') });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                // Redirect to the dashboard upon successful login
+                window.location.href = '/hospital_dashboard.html';
+            }
+        })
+        .catch(error => {
+            errorMessage.textContent = error.message;
+            errorMessage.style.display = 'block';
+        });
+    });
+  </script>
+</body>
+</html>

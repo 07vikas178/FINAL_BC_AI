@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Doctor Registration - Medi Fusion</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    width: 100%;
+    max-width: 450px;
+  }
+  h1 { text-align: center; color: #19334f; margin-bottom: 30px; }
+  label { font-weight: 600; color: #405c77; display: block; margin-top: 15px; }
+  input, select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border: 2px solid #bccad6;
+    border-radius: 12px;
+    box-sizing: border-box;
+  }
+  button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 30px;
+    background: linear-gradient(145deg, #1d3557, #457b9d);
+    color: white;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+   .back-link {
+    display: block;
+    color: #1d3557;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+    text-align: center;
+  }
+  #message {
+    margin-bottom: 1em;
+    padding: 1em;
+    border-radius: 5px;
+    display: none;
+    text-align: center;
+  }
+  .success { background-color: #d4edda; color: #155724; }
+  .error { background-color: #f8d7da; color: #721c24; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Doctor Registration</h1>
+    <form id="register-form">
+        <div id="message"></div>
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" placeholder="Enter your name" required />
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" placeholder="Create a secure password" required />
+
+      <label for="contact_number">Contact Number:</label>
+      <input type="tel" id="contact_number" name="contact_number" placeholder="Enter contact number" required />
+
+      <label for="specialization">Specialization:</label>
+      <input type="text" id="specialization" name="specialization" placeholder="Your specialization" required />
+
+      <label for="hospital_email">Select Hospital:</label>
+      <select id="hospital_email" name="hospital_email" required>
+        <option value="">Loading hospitals...</option>
+      </select>
+
+      <button type="submit">Register</button>
+    </form>
+    <a href="/index.html" class="back-link">Back to Home</a>
+  </div>
+
+  <script>
+      // Fetch hospitals as soon as the page loads
+      document.addEventListener('DOMContentLoaded', async () => {
+          const hospitalSelect = document.getElementById('hospital_email');
+          
+          try {
+              // We need a token to call this route. 
+              // This is a design flaw: a doctor can't register without being logged in?
+              // For now, let's assume /api/hospitals is public or use a temporary fix.
+              // Let's modify the server.js to make /api/hospitals public.
+              // *** I have modified the server.js route to NOT require authenticateToken ***
+              // *** Wait, I'll just use the patient's token. This is still a flaw.
+              // *** Let's assume the user has a "guest" token or this page is accessed *after* a login.
+              
+              // Let's proceed assuming the user *might* not have a token.
+              // The API route MUST be made public.
+              // I will remove 'authenticateToken' from the '/api/hospitals' route in server.js
+              // (Checking server.js... yes, the original /api/hospitals *does* have authenticateToken)
+              // (I will remove it in my new server.js)
+              // *** CORRECTION: I have removed 'authenticateToken' from the '/api/hospitals' route in my provided server.js ***
+              
+              const response = await fetch('/api/hospitals');
+              if (!response.ok) throw new Error('Failed to fetch hospitals');
+              
+              const hospitals = await response.json();
+              
+              hospitalSelect.innerHTML = '<option value="">Select a hospital</option>'; // Clear 'loading'
+              
+              if (hospitals.length === 0) {
+                  hospitalSelect.innerHTML = '<option value="">No hospitals registered</option>';
+                  return;
+              }
+              
+              hospitals.forEach(hospital => {
+                  const option = document.createElement('option');
+                  option.value = hospital.id; // The 'id' is the hospital's email
+                  option.textContent = hospital.hospital_name;
+                  hospitalSelect.appendChild(option);
+              });
+
+          } catch (error) {
+              console.error('Failed to load hospitals:', error);
+              hospitalSelect.innerHTML = '<option value="">Error loading hospitals</option>';
+          }
+      });
+
+      // Registration form submit listener
+      document.getElementById('register-form').addEventListener('submit', async (event) => {
+          event.preventDefault();
+          
+          const form = event.target;
+          const formData = new FormData(form);
+          const data = Object.fromEntries(formData.entries());
+          const messageDiv = document.getElementById('message');
+
+          try {
+              const response = await fetch('/api/doctor/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data)
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
+                  messageDiv.textContent = 'Registration request sent! Please wait for hospital approval, then log in.';
+                  messageDiv.className = 'success';
+                  form.reset();
+                   setTimeout(() => {
+                      window.location.href = '/doctor_login.html';
+                  }, 3000);
+              } else {
+                  messageDiv.textContent = result.error || 'Registration failed.';
+                  messageDiv.className = 'error';
+              }
+              messageDiv.style.display = 'block';
+
+          } catch (error) {
+              console.error('Registration error:', error);
+              messageDiv.textContent = 'An error occurred. Please try again.';
+              messageDiv.className = 'error';
+              messageDiv.style.display = 'block';
+          }
+      });
+  </script>
+</body>
+</html>

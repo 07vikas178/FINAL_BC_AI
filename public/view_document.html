@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Document - Medi Fusion</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f6f9; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 50px auto; 
+            background-color: #fff; 
+            padding: 30px; 
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); 
+            border-radius: 12px; 
+        }
+        h2 { 
+            font-size: 2rem; 
+            margin-bottom: 20px; 
+            color: #2c3e50;
+        }
+        pre { 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            background-color: #f9fafb; 
+            padding: 20px; 
+            border-radius: 8px;
+            border: 1px solid #ddd; 
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            min-height: 200px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Extracted Text from Document</h2>
+        <pre id="document-text">Loading document...</pre>
+        <button onclick="window.history.back()" class="btn">&#8592; Back</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const textContainer = document.getElementById('document-text');
+            
+            // Get document ID from URL, e.g., view_document.html?doc_id=1
+            const urlParams = new URLSearchParams(window.location.search);
+            const docId = urlParams.get('doc_id');
+
+            if (!docId) {
+                textContainer.textContent = 'Error: No document identifier provided.';
+                return;
+            }
+
+            try {
+                // This assumes you have an API endpoint to fetch document text
+                const response = await fetch(`/api/document/${docId}`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    textContainer.textContent = result.text || 'No text could be extracted from this document.';
+                } else {
+                    textContainer.textContent = `Error: ${result.error || 'Could not load document.'}`;
+                }
+            } catch (error) {
+                console.error('Failed to fetch document:', error);
+                textContainer.textContent = 'Failed to connect to the server to load the document.';
+            }
+        });
+    </script>
+</body>
+</html>

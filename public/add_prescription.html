@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI-Assisted Prescription - MediChain</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 2rem 0; }
+        .container { background: white; padding: 2rem 2.5rem; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 700px; }
+        h1 { color: #333; text-align: center; margin-bottom: 1.5rem; font-weight: 600; }
+        
+        /* Form Styling */
+        label { display: block; margin-bottom: .5rem; font-weight: 600; color: #555; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: .75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; transition: border-color 0.3s; }
+        input:focus, textarea:focus { border-color: #007bff; outline: none; }
+        input:read-only { background-color: #e9ecef; cursor: not-allowed; }
+        textarea { min-height: 120px; resize: vertical; grid-column: 1 / -1; } /* Span full width */
+        
+        /* Button Styling */
+        button { width: 100%; padding: .8rem; border: none; border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s, transform 0.2s; }
+        button:hover { transform: translateY(-2px); }
+        #submit-btn { background-color: #007bff; }
+        #submit-btn:hover { background-color: #0056b3; }
+        #ai-btn { background-color: #28a745; margin-top: 0.5rem; grid-column: 1 / -1; }
+        #ai-btn:hover { background-color: #218838; }
+        button:disabled { background-color: #a0c3e6; cursor: wait; transform: none; }
+        
+        /* AI Results Area */
+        #ai-analysis-section { display: none; margin-top: 2rem; border-top: 2px solid #eee; padding-top: 1.5rem; }
+        #ai-analysis-section h2 { text-align: center; color: #444; margin-bottom: 1.5rem; font-weight: 600; }
+        .ai-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .ai-card h3 { margin-top: 0; color: #0056b3; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; margin-bottom: 1rem; font-weight: 600; }
+        .ai-card pre { white-space: pre-wrap; word-wrap: break-word; font-family: 'Poppins', sans-serif; font-size: 0.95rem; line-height: 1.6; color: #333; }
+        #accept-suggestion-btn { background-color: #ffc107; color: #212529; margin-top: 1rem; }
+        #accept-suggestion-btn:hover { background-color: #e0a800; }
+        
+        /* Messaging */
+        .message { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; display: none; text-align: center; font-weight: 500;}
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>AI-Assisted Prescription</h1>
+    <form id="prescription-form">
+        <div class="form-grid">
+            <div>
+                <label for="patientId">Patient ID</label>
+                <input type="text" id="patientId" name="patientId" required readonly>
+            </div>
+            <div>
+                <label for="doctorName">Doctor Name</label>
+                <input type="text" id="doctorName" name="doctorName" required readonly>
+            </div>
+            <div style="grid-column: 1 / -1;">
+                <label for="disease">Disease / Diagnosis</label>
+                <input type="text" id="disease" name="disease" placeholder="Enter diagnosis for this prescription" required>
+            </div>
+        </div>
+        
+        <label for="text">Draft Prescription</label>
+        <textarea id="text" name="text" placeholder="E.g., Paracetamol 500mg, 1 tablet twice a day for 3 days."></textarea>
+        
+        <!-- AI and Final Submission Buttons -->
+        <div class="form-grid">
+            <button type="button" id="ai-btn">Get AI Analysis</button>
+            <button type="submit" id="submit-btn">Submit Final Prescription</button>
+        </div>
+    </form>
+    
+    <!-- AI Analysis Results Section -->
+    <div id="ai-analysis-section">
+        <h2>AI Clinical Decision Support</h2>
+        <div class="ai-card" id="summary-card">
+            <h3>Patient History Summary</h3>
+            <pre id="ai-summary-content">Analyzing...</pre>
+        </div>
+        <div class="ai-card" id="analysis-card">
+            <h3>Prescription Analysis & Suggestion</h3>
+            <pre id="ai-analysis-content">Analyzing...</pre>
+            <button type="button" id="accept-suggestion-btn" style="display: none;">Accept AI Suggestion</button>
+        </div>
+    </div>
+    
+    <div id="message" class="message"></div>
+</div>
+
+<script>
+let rewrittenPrescriptionText = ''; // Global variable to hold the AI's suggestion
+
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const patientId = params.get('patient_id');
+    const patientIdInput = document.getElementById('patientId');
+    const doctorNameInput = document.getElementById('doctorName');
+
+    if (patientId) {
+        patientIdInput.value = patientId;
+    } else {
+        alert('Patient ID not found. Please return to the dashboard.');
+        document.getElementById('submit-btn').disabled = true;
+    }
+
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            doctorNameInput.value = payload.name;
+        } catch (e) {
+            console.error('Failed to parse token:', e);
+            alert('Could not retrieve doctor info. Please log in again.');
+        }
+    } else {
+        alert('You are not logged in. Please log in to continue.');
+        window.location.href = '/doctor_login.html';
+    }
+});
+
+document.getElementById('ai-btn').onclick = async function() {
+    const patientId = document.getElementById('patientId').value;
+    const draftPrescription = document.getElementById('text').value;
+    const msgDiv = document.getElementById('message');
+    const aiBtn = this;
+
+    if (!draftPrescription.trim()) {
+        alert("Please write a draft prescription before running the AI analysis.");
+        return;
+    }
+
+    aiBtn.disabled = true;
+    aiBtn.textContent = 'Analyzing... Please Wait';
+    msgDiv.style.display = 'none';
+
+    // Show and reset AI section
+    const aiSection = document.getElementById('ai-analysis-section');
+    aiSection.style.display = 'block';
+    document.getElementById('ai-summary-content').textContent = 'Fetching and summarizing patient history...';
+    document.getElementById('ai-analysis-content').textContent = 'Analyzing draft prescription against history...';
+    document.getElementById('accept-suggestion-btn').style.display = 'none';
+
+    try {
+        const resp = await fetch(`/api/ai/analyze-prescription/${patientId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ draftPrescription })
+        });
+
+        const res = await resp.json();
+
+        if (!resp.ok) {
+            throw new Error(res.error || 'An unknown error occurred during AI analysis.');
+        }
+
+        document.getElementById('ai-summary-content').textContent = res.historySummary;
+        document.getElementById('ai-analysis-content').textContent = res.prescriptionAnalysis;
+
+        // Extract the rewritten prescription for the "accept" button
+        const analysisText = res.prescriptionAnalysis;
+        const match = analysisText.match(/Rewritten Prescription\s*:\s*([\s\S]*)/i);
+        if (match && match[1]) {
+            rewrittenPrescriptionText = match[1].trim();
+            document.getElementById('accept-suggestion-btn').style.display = 'block';
+        }
+
+    } catch (error) {
+        msgDiv.textContent = 'AI Analysis Error: ' + error.message;
+        msgDiv.className = 'message error';
+        msgDiv.style.display = 'block';
+        aiSection.style.display = 'none'; // Hide on error
+    } finally {
+        aiBtn.disabled = false;
+        aiBtn.textContent = 'Re-run AI Analysis';
+    }
+};
+
+document.getElementById('accept-suggestion-btn').onclick = function() {
+    if (rewrittenPrescriptionText) {
+        document.getElementById('text').value = rewrittenPrescriptionText;
+        // Optional: scroll to the top to see the change
+        window.scrollTo(0, 0);
+    }
+};
+
+document.getElementById('prescription-form').onsubmit = async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const submitBtn = document.getElementById('submit-btn');
+    const msgDiv = document.getElementById('message');
+    
+    if (!form.text.value.trim()) {
+        alert("The final prescription text cannot be empty.");
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting to Blockchain...';
+    msgDiv.style.display = 'none';
+    msgDiv.className = 'message';
+    
+    // Create FormData for submission (as it can handle files)
+    const formData = new FormData();
+    formData.append('patientId', form.patientId.value);
+    formData.append('doctorName', form.doctorName.value);
+    formData.append('disease', form.disease.value);
+    formData.append('text', form.text.value);
+
+    try {
+        const resp = await fetch('/api/prescription', { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+
+        const res = await resp.json();
+
+        if (resp.ok && res.success) {
+            msgDiv.textContent = 'Prescription stored successfully on the blockchain! CID: ' + res.cid;
+            msgDiv.className = 'message success';
+            form.disease.value = '';
+            form.text.value = '';
+            document.getElementById('ai-analysis-section').style.display = 'none'; // Hide AI section on success
+        } else {
+            throw new Error(res.error || 'An unknown error occurred during submission.');
+        }
+    } catch (error) {
+        msgDiv.textContent = 'Submission Error: ' + error.message;
+        msgDiv.className = 'message error';
+    } finally {
+        msgDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Final Prescription';
+    }
+};
+</script>
+</body>
+</html>

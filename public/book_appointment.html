@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 2.5rem 3rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h2 {
+            color: #0d6efd;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        .doctor-info {
+            background-color: #eef2f7;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        .doctor-info p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        .doctor-info strong {
+            color: #343a40;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: #495057;
+            font-weight: 600;
+            text-align: left;
+        }
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="datetime-local"]:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        button {
+            width: 100%;
+            padding: 14px 0;
+            margin-top: 1.5rem;
+            background: #0d6efd;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0b5ed7;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #6c757d;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 1rem;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Book Appointment</h2>
+        <div class="doctor-info">
+            <p><strong>Name:</strong> <span id="doctor-name">loading...</span></p>
+            <p><strong>Specialization:</strong> <span id="doctor-specialization">loading...</span></p>
+        </div>
+        <form id="appointment-form">
+            <label for="appointment_time">Select Appointment Date & Time:</label>
+            <input type="datetime-local" id="appointment_time" name="appointment_time" required>
+            <button type="submit">Book Appointment</button>
+        </form>
+        <div id="error-message" class="error-message"></div>
+        <a href="/patient_dashboard.html" class="back-link">&larr; Back to Dashboard</a>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/patient_login.html';
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const doctorId = urlParams.get('doctor_id');
+        // --- NEW: Get the hospital name from the URL ---
+        const hospitalName = urlParams.get('hospital');
+        
+        const doctorNameEl = document.getElementById('doctor-name');
+        const doctorSpecEl = document.getElementById('doctor-specialization');
+        const appointmentForm = document.getElementById('appointment-form');
+        const errorMessageEl = document.getElementById('error-message');
+        const backLink = document.querySelector('.back-link');
+
+        // --- NEW: Update the back link to include the hospital name ---
+        if (hospitalName) {
+            backLink.href = `/patient_dashboard.html?hospital=${hospitalName}`;
+        }
+
+        async function fetchDoctorDetails() {
+            try {
+                const response = await fetch(`/api/doctor-details/${doctorId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch doctor details');
+                }
+                const doctor = await response.json();
+                doctorNameEl.textContent = "Dr. " + doctor.name;
+                doctorSpecEl.textContent = doctor.specialization;
+            } catch (error) {
+                console.error('Error:', error);
+                doctorNameEl.textContent = 'Error loading doctor details';
+                doctorSpecEl.textContent = 'Please go back and try again.';
+            }
+        }
+
+        appointmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessageEl.style.display = 'none';
+
+            const appointmentTime = document.getElementById('appointment_time').value;
+
+            try {
+                const response = await fetch('/api/appointments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        doctor_id: doctorId,
+                        appointment_time: appointmentTime
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'An unknown error occurred.');
+                }
+                
+                alert(result.message);
+                
+                // --- MODIFIED: Redirect back to the dashboard WITH the hospital name ---
+                if (hospitalName) {
+                    window.location.href = `/patient_dashboard.html?hospital=${hospitalName}`;
+                } else {
+                    window.location.href = '/patient_dashboard.html'; // Fallback
+                }
+
+            } catch (error) {
+                console.error('Booking Error:', error);
+                errorMessageEl.textContent = error.message;
+                errorMessageEl.style.display = 'block';
+            }
+        });
+
+        if (doctorId) {
+            fetchDoctorDetails();
+        } else {
+            doctorNameEl.textContent = 'No doctor selected.';
+        }
+    </script>
+</body>
+</html>

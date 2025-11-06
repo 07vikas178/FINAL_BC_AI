@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Medi Fusion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /*
+      NEW AESTHETIC DESIGN
+      Key Improvements:
+      - Refined Color Palette: Softer, more cohesive colors for a professional feel.
+      - CSS Variables: For easy theme management.
+      - Glassmorphism Navbar: A modern, semi-transparent blurred effect.
+      - Improved Spacing: More whitespace for a cleaner, uncluttered layout.
+      - Subtle Animations: Smoother transitions and hover effects.
+      - Modern Card Design: Gradient borders on hover for a sleek look.
+      - Enhanced Form UI: Better visual feedback on form inputs.
+    */
+    
+    :root {
+      --bg-dark: #0d1117;
+      --bg-light: #161b22;
+      --border-color: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #909dab;
+      --accent-primary: #58a6ff;
+      --accent-secondary: #3fb950;
+      --gradient-accent: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      --shadow-color: rgba(88, 166, 255, 0.2);
+    }
+
+    /* --- General & Body Styles --- */
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* --- Navigation Bar --- */
+    nav {
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      background: rgba(13, 17, 23, 0.7); /* Semi-transparent */
+      backdrop-filter: blur(12px); /* Glassmorphism effect */
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: center;
+      padding: 1rem 2rem;
+      animation: dropDown 0.9s cubic-bezier(0.4, 2, 0.3, 1) forwards;
+    }
+
+    @keyframes dropDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul li a {
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.5rem 0; /* Simpler padding */
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    nav ul li a::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--gradient-accent);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    nav ul li a:hover,
+    nav ul li a.active,
+    nav ul li a[aria-current="page"] {
+      color: var(--accent-primary);
+    }
+
+    nav ul li a:hover::after,
+    nav ul li a.active::after,
+    nav ul li a[aria-current="page"]::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    /* --- Header Section --- */
+    header {
+      padding: 160px 20px 120px;
+      text-align: center;
+      animation: fadeInScale 1.2s ease-out forwards;
+      background: var(--bg-dark);
+      position: relative;
+      overflow: hidden;
+    }
+    /* Adds a subtle decorative glow */
+    header::before {
+        content: '';
+        position: absolute;
+        top: -20%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(88, 166, 255, 0.1), transparent 70%);
+        z-index: 0;
+    }
+
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    header h1 {
+      font-weight: 800;
+      font-size: clamp(2.5rem, 5vw, 4rem); /* Responsive font size */
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 1rem;
+      position: relative;
+    }
+
+    header p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+      position: relative;
+    }
+
+    .btn-cta {
+      background: var(--gradient-accent);
+      padding: 16px 45px;
+      border: none;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: white;
+      box-shadow: 0 8px 25px var(--shadow-color);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: inline-block;
+      position: relative;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 12px 35px var(--shadow-color);
+    }
+
+    /* --- Content Sections --- */
+    section {
+      max-width: 1200px;
+      margin: 80px auto;
+      padding: 20px;
+    }
+
+    section h2 {
+      font-weight: 800;
+      font-size: 2.8rem;
+      text-align: center;
+      margin-bottom: 3rem;
+      color: var(--text-primary);
+      position: relative;
+    }
+
+    section h2::after {
+      content: "";
+      display: block;
+      width: 70px;
+      height: 4px;
+      background: var(--gradient-accent);
+      border-radius: 2px;
+      margin: 10px auto 0;
+    }
+    
+    #about p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.7;
+    }
+
+    /* --- Feature Cards Section --- */
+    .feature-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: var(--bg-light);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-accent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: 0;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--accent-primary);
+    }
+
+    .feature-card img {
+      max-height: 120px;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      filter: grayscale(30%);
+      transition: filter 0.3s ease;
+    }
+    
+    .feature-card:hover img {
+        filter: grayscale(0%);
+    }
+
+    .feature-card .plugin-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .feature-card .plugin-desc {
+      font-weight: 400;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* --- Contact Form Section --- */
+    #contact {
+      max-width: 700px;
+      margin: 80px auto;
+    }
+
+    #contact form label {
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
+    }
+
+    #contact form input,
+    #contact form textarea {
+      width: 100%;
+      padding: 14px;
+      margin-top: 0.5rem;
+      background: var(--bg-light);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: "Poppins", sans-serif;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+      resize: vertical;
+    }
+
+    #contact form input:focus,
+    #contact form textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--shadow-color);
+    }
+
+    #contact form button {
+      width: 100%;
+      margin-top: 2rem;
+      padding: 16px 0;
+      background: var(--gradient-accent);
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #contact form button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px var(--shadow-color);
+    }
+
+    /* --- Feedback Message Styling --- */
+    #contact-message {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding: 12px;
+        border-radius: 8px;
+        display: none; /* Hidden by default */
+        font-weight: 500;
+    }
+    .success-message {
+        background-color: rgba(63, 185, 80, 0.2);
+        color: var(--accent-secondary);
+        border: 1px solid var(--accent-secondary);
+    }
+    .error-message {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #f87171;
+        border: 1px solid #dc3545;
+    }
+    
+    /* --- Footer --- */
+    footer {
+        text-align: center;
+        padding: 2.5rem;
+        margin-top: 4rem;
+        background: var(--bg-light);
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul id="navLinks">
+      <li><a href="#home" class="active">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="/patient_register.html">Patient Register</a></li>
+      <li><a href="/patient_login.html">Patient Login</a></li>
+      <li><a href="/doctor_login.html">Doctor Login</a></li>
+      <li><a href="/doctor_register.html">Doctor Register</a></li>
+      <li><a href="/hospital_login.html">Hospital Login</a></li>
+      <li><a href="/hospital_register.html">Hospital Register</a></li>
+    </ul>
+  </nav>
+
+  <header id="home">
+    <h1>Medi Fusion</h1>
+    <p>Your Trusted Medical Management System</p>
+    <a href="/patient_login.html" class="btn-cta">Book an Appointment</a>
+  </header>
+
+  <main>
+      <section id="about">
+        <h2>About Medi Fusion</h2>
+        <p>Medi Fusion is a comprehensive healthcare management platform designed to integrate patient, doctor, and administrative functionalities into a seamless, modern, and efficient experience for everyone involved.</p>
+      </section>
+    
+      <section id="features" class="card-section">
+        <h2>Most Popular Features</h2>
+        <div class="feature-cards" id="featureCards">
+          <div class="feature-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/3601/3601003.png" alt="Patient Registration" />
+            <div class="plugin-title">Online Registration</div>
+            <div class="plugin-desc">Register anywhere at any time with our intuitive platform and instant email verification.</div>
+          </div>
+           <div class="feature-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/2764/2764463.png" alt="Doctor Login" />
+            <div class="plugin-title">Doctor Portal</div>
+            <div class="plugin-desc">A secure and reliable interface for doctors to efficiently manage patient appointments and records.</div>
+          </div>
+          <div class="feature-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Admin Dashboard" />
+            <div class="plugin-title">Admin Dashboard</div>
+            <div class="plugin-desc">Access powerful administrative tools for comprehensive user and appointment management.</div>
+          </div>
+        </div>
+      </section>
+    
+      <section id="contact">
+        <h2>Contact Us</h2>
+        <form id="contact-form">
+          <label for="name">Name:</label>
+          <input type="text" id="name" name="name" placeholder="Your full name" required />
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" placeholder="your.email@example.com" required />
+          <label for="message">Message:</label>
+          <textarea id="message" name="message" rows="6" placeholder="Type your message..." required></textarea>
+          <button type="submit">Send Message</button>
+        </form>
+        <div id="contact-message"></div>
+      </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Medi Fusion. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    // --- Contact Form Submission (No changes needed here) ---
+    const contactForm = document.getElementById('contact-form');
+    const contactMessage = document.getElementById('contact-message');
+
+    contactForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(contactForm);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            contactMessage.style.display = 'block';
+            if (response.ok) {
+                contactMessage.textContent = result.message;
+                contactMessage.className = 'success-message';
+                contactForm.reset();
+            } else {
+                contactMessage.textContent = result.error || 'An error occurred.';
+                contactMessage.className = 'error-message';
+            }
+        } catch (error) {
+            contactMessage.style.display = 'block';
+            contactMessage.textContent = 'Failed to send message. Please try again later.';
+            contactMessage.className = 'error-message';
+        }
+    });
+  </script>
+</body>
+</html>
