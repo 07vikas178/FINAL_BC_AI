@@ -122,12 +122,12 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const doctorId = urlParams.get('doctorId');
-        const hospitalEmail = urlParams.get('hospitalEmail'); // Get the hospital email from URL
+        const hospitalEmail = urlParams.get('hospitalEmail'); 
         const doctorNameEl = document.getElementById('doctor-name');
         const doctorSpecEl = document.getElementById('doctor-specialization');
         const errorMessageEl = document.getElementById('error-message');
 
-        // Set the back link to return to dashboard with the hospital still selected
+        // Set correct back link
         const backLink = document.getElementById('back-link');
         if (hospitalEmail) {
             backLink.href = `/patient_dashboard.html?hospital_email=${encodeURIComponent(hospitalEmail)}`;
@@ -135,18 +135,33 @@
             backLink.href = '/patient_dashboard.html';
         }
 
-        // Fetch Doctor Details
+        // Fetch Doctor Details using the newly added API route
         async function fetchDoctorDetails() {
             const token = localStorage.getItem('token');
+            if (!doctorId) {
+                 errorMessageEl.textContent = "Error: Doctor ID missing from URL.";
+                 errorMessageEl.style.display = 'block';
+                 return;
+            }
+
             try {
-                const response = await fetch(`/api/doctor-details/${doctorId}`, {
+                const response = await fetch(`/api/doctor-details/${encodeURIComponent(doctorId)}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!response.ok) throw new Error('Failed to fetch doctor details');
+                
+                if (!response.ok) {
+                     const err = await response.json();
+                     throw new Error(err.error || 'Failed to fetch doctor details');
+                }
+                
                 const doctor = await response.json();
                 doctorNameEl.textContent = 'Dr. ' + doctor.name;
-                doctorSpecEl.textContent = doctor.specialization;
+                // Store raw name for submission later
+                doctorNameEl.dataset.rawName = doctor.name; 
+                doctorSpecEl.textContent = doctor.specialization || 'N/A';
+
             } catch (error) {
+                console.error("Error fetching details:", error);
                 doctorNameEl.textContent = 'Error loading details';
                 doctorSpecEl.textContent = '-';
                 errorMessageEl.textContent = error.message;
@@ -158,11 +173,17 @@
         document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const appointmentTime = document.getElementById('appointment-time').value;
-            // We also need the doctor's name for the blockchain record
-            const doctorName = doctorNameEl.textContent.replace('Dr. ', '');
+            // Use the name fetched from API, fallback to text content if needed
+            const doctorName = doctorNameEl.dataset.rawName || doctorNameEl.textContent.replacepV('Dr. ', '');
             const token = localStorage.getItem('token');
 
             errorMessageEl.style.display = 'none';
+
+            if (!doctorName || doctorName === 'Loading...' || doctorName === 'Error loading details') {
+                errorMessageEl.textContent = "Cannot book: Doctor details not loaded.";
+                errorMessageEl.style.display = 'block';
+                return;
+            }
 
             try {
                 const response = await fetch('/api/appointments', {
@@ -172,7 +193,7 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        doctor_email: doctorId, // In new system, doctorId IS the email
+                        doctor_email: doctorId,
                         doctor_name: doctorName,
                         appointment_time: appointmentTime
                     })
@@ -181,12 +202,12 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(result.error || 'An unknown error occurred.');
+                    throw new Error(result.error || 'Booking failed.');
                 }
                 
                 alert(result.message);
                 
-                // Redirect back to dashboard, keeping the hospital selected
+                // Redirect back to dashboard
                 if (hospitalEmail) {
                     window.location.href = `/patient_dashboard.html?hospital_email=${encodeURIComponent(hospitalEmail)}`;
                 } else {
@@ -194,16 +215,16 @@
                 }
 
             } catch (error) {
-                console.error('Booking Error:', error);
                 errorMessageEl.textContent = error.message;
                 errorMessageEl.style.display = 'block';
             }
         });
 
-        if (doctorId) {
-            fetchDoctorDetails();
+        // Initialize
+        if (localStorage.getItem('token')) {
+             fetchDoctorDetails();
         } else {
-            doctorNameEl.textContent = 'No doctor selected.';
+             window.location.href = '/patient_login.html';
         }
     </script>
 </body>
