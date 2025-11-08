@@ -25,7 +25,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 let ipfs;
 const web3 = new Web3('http://127.0.0.1:7545');
 
-// ⚠️ PASTE YOUR FULL ABI HERE ⚠️
+// ⚠️ PASTE YOUR FULL (AND NEWEST) ABI HERE ⚠️
+// (Using the ABI from our last conversation, which includes the bug fixes)
 const contractABI = [
 	{
 		"anonymous": false,
@@ -546,6 +547,25 @@ const contractABI = [
 				"internalType": "enum MedicalRecord.AffiliationStatus",
 				"name": "status",
 				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "doctorAppointmentIndex",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -1243,6 +1263,25 @@ const contractABI = [
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"name": "patientAppointmentIndex",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			},
 			{
 				"internalType": "uint256",
@@ -1456,9 +1495,9 @@ const contractABI = [
 ];
 
 // ⚠ UPDATE THESE ADDRESSES & KEYS ⚠
-const contractAddress = '0xc974d485967222bFc9cce5D9ed6Ceb6D4e028bCD';
-const senderAddress = '0xFaABF7C7Ff55D37732F39452695627Cd692dd38A';
-const privateKey = '0x77613fff4214412e3ee3c76fb41f17423bead48b1b5a17d8afbb9de50f115c86';
+const contractAddress = '0xa1677210Ac7Aa4e79ee1e898D4Ee5f9399676C93';
+const senderAddress = '0x5FA307ec4720Fd4f4e0eb3a29283c63d2D1132a0';
+const privateKey = '0x39b580f40bbfc72c62c99292f35e473b8a4b49f10fe1bcd8b37494803170e4c1';
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
 // --- FILE UPLOAD & JWT ---
@@ -1746,12 +1785,64 @@ app.get('/api/my-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'doctor') return res.status(403).json({ error: 'Forbidden' });
     try {
         const appointments = await contract.methods.getAppointmentsForDoctor(req.user.email).call({ from: senderAddress });
-        res.json(appointments.filter(a => a.status === 'Approved').map(a => ({
-            appointment_id: a.consultingId, consulting_id: a.consultingId, appointment_time: a.appointmentTime,
-            patient_id: a.patientEmail, patient_name: a.patientName
-        })));
-    } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments.' }); }
+        
+        const approvedAppointments = [];
+        for (const a of appointments) {
+            if (a.status === 'Approved') {
+                let gender = 'N/A';
+                try {
+                    const patientUser = await contract.methods.getUser(a.patientEmail).call({ from: senderAddress });
+                    const details = JSON.parse(patientUser.details || '{}');
+                    gender = details.gender || 'N/A';
+                } catch (e) {
+                    console.error("Could not fetch patient gender", e);
+                }
+                
+                approvedAppointments.push({
+                    appointment_id: a.consultingId,
+                    consulting_id: a.consultingId,
+                    appointment_time: a.appointmentTime,
+                    patient_id: a.patientEmail,
+                    patient_name: a.patientName,
+                    gender: gender // Added gender
+                });
+            }
+        }
+        res.json(approvedAppointments);
+
+    } catch (error) { 
+        console.error("Error in /api/my-appointments:", error);
+        res.status(500).json({ error: 'Failed to fetch appointments.' }); 
+    }
 });
+
+// --- *** NEW ROUTE FIX FOR view_history.html *** ---
+app.get('/api/history/:patientId', authenticateToken, async (req, res) => {
+    // Added security check: only doctors can access this
+    if (req.user.type !== 'doctor') return res.status(403).json({ error: 'Forbidden' });
+    try {
+        const records = await contract.methods.getHistory(req.params.patientId).call({ from: senderAddress });
+        const results = await Promise.all(records.map(async rec => {
+            let data = '';
+            try { 
+                for await (const chunk of ipfs.cat(rec.cid)) {
+                    data += Buffer.from(chunk).toString('utf8');
+                }
+            } 
+            catch (err) { 
+                console.error(`IPFS cat error for CID ${rec.cid}:`, err.message);
+                data = '[Error retreiving IPFS content]'; 
+            }
+            return { doctorName: rec.doctorName, disease: rec.disease, timestamp: rec.timestamp.toString(), data };
+        }));
+        // Send object with 'history' key, as expected by view_history.html
+        res.json({ history: results.reverse() });
+    } catch (e) { 
+        console.error("Error in /api/history/:patientId:", e);
+        res.status(500).json({ error: e.message }); 
+    }
+});
+
 
 app.get('/api/my-prescriptions', authenticateToken, async (req, res) => {
     if (req.user.type !== 'patient') return res.status(403).json({ error: 'Forbidden' });
@@ -1759,8 +1850,15 @@ app.get('/api/my-prescriptions', authenticateToken, async (req, res) => {
         const records = await contract.methods.getHistory(req.user.email).call({ from: senderAddress });
         const results = await Promise.all(records.map(async rec => {
             let data = '';
-            try { for await (const chunk of ipfs.cat(rec.cid)) data += Buffer.from(chunk).toString('utf8'); } 
-            catch (err) { data = '[Error retreiving IPFS content]'; }
+            try { 
+                for await (const chunk of ipfs.cat(rec.cid)) {
+                    data += Buffer.from(chunk).toString('utf8');
+                }
+            } 
+            catch (err) { 
+                console.error(`IPFS cat error for CID ${rec.cid}:`, err.message);
+                data = '[Error retreiving IPFS content]'; 
+            }
             return { doctorName: rec.doctorName, disease: rec.disease, timestamp: rec.timestamp.toString(), data };
         }));
         res.json(results.reverse());
@@ -1773,10 +1871,22 @@ app.post('/api/prescription', authenticateToken, upload.single('file'), async (r
         let data = req.file ? fs.readFileSync(req.file.path) : Buffer.from(req.body.text);
         if (req.file) fs.unlinkSync(req.file.path);
         const { cid } = await ipfs.add(data);
-        const method = contract.methods.addPrescription(req.body.patientEmail, req.user.name, req.body.disease, cid.toString(), Date.now());
+
+        // --- *** BUG FIX 2: Changed req.body.patientEmail to req.body.patientId *** ---
+        // The form sends 'patientId', not 'patientEmail'. This caused the Web3 validator error.
+        const method = contract.methods.addPrescription(
+            req.body.patientId, // <--- THIS IS THE FIX
+            req.user.name, 
+            req.body.disease, 
+            cid.toString(), 
+            Date.now().toString() // Also ensure timestamp is a string or uint256
+        );
         const receipt = await sendTransaction(method);
         res.json({ success: true, cid: cid.toString(), transactionHash: receipt.transactionHash });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        console.error("Error in /api/prescription:", e);
+        res.status(500).json({ error: e.message }); // This is where the 'Web3 validator' error was sent from
+    }
 });
 
 app.post('/api/ai/analyze-prescription/:patientEmail', authenticateToken, async (req, res) => {
@@ -1786,7 +1896,16 @@ app.post('/api/ai/analyze-prescription/:patientEmail', authenticateToken, async 
         let historyTxt = "No history.";
         if (records.length > 0) {
              const history = await Promise.all(records.map(async rec => {
-                let data = ''; try { for await (const chunk of ipfs.cat(rec.cid)) data += Buffer.from(chunk).toString('utf8'); } catch (e) {}
+                let data = ''; 
+                // --- *** BUG FIX 1 (Hardening): Added proper error handling for ipfs.cat *** ---
+                try { 
+                    for await (const chunk of ipfs.cat(rec.cid)) {
+                        data += Buffer.from(chunk).toString('utf8');
+                    }
+                } catch (err) { 
+                    console.error(`IPFS cat error for CID ${rec.cid}:`, err.message);
+                    data = '[Error retrieving IPFS content]'; // Set error message instead of empty catch
+                }
                 return `- ${new Date(parseInt(rec.timestamp.toString())).toLocaleDateString()}: ${rec.disease} (Dr. ${rec.doctorName}) - ${data}`;
             }));
             historyTxt = history.join('\n');
@@ -1794,8 +1913,28 @@ app.post('/api/ai/analyze-prescription/:patientEmail', authenticateToken, async 
         const summary = await callGeminiApi(`Summarize medical history:\n${historyTxt}`);
         const analysis = await callGeminiApi(`Patient History Summary:\n${summary}\n\nDraft Prescription:\n${req.body.draftPrescription}\n\nAnalyze for issues, suggest mods, rewrite.`);
         res.json({ historySummary: summary, prescriptionAnalysis: analysis });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        console.error("Error in /api/ai/analyze-prescription:", e);
+        res.status(500).json({ error: e.message }); 
+    }
 });
+
+// --- *** NEW ROUTE FIX FOR view_history.html *** ---
+app.post('/api/ai/summarize-full-history', authenticateToken, async (req, res) => {
+    if (req.user.type !== 'doctor') return res.status(403).json({ error: 'Forbidden' });
+    try {
+        const { fullHistory } = req.body;
+        if (!fullHistory) return res.status(400).json({ error: 'fullHistory text is required.' });
+        
+        // Call the AI helper function
+        const summary = await callGeminiApi(`Summarize this medical history:\n${fullHistory}`);
+        res.json({ summary: summary });
+    } catch (e) { 
+        console.error("Error in /api/ai/summarize-full-history:", e);
+        res.status(500).json({ error: e.message }); 
+    }
+});
+
 
 // --- START SERVER ---
 const PORT = process.env.PORT || 3000;

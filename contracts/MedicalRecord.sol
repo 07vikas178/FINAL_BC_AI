@@ -25,7 +25,6 @@ contract MedicalRecord {
     mapping(string => User) public users;
     // Mapping for quick existence check
     mapping(string => bool) public isUserEmailRegistered;
-
     // --- DOCTOR AFFILIATION (GRANT/REVOKE) ---
 
     enum AffiliationStatus { Pending, Approved, Revoked }
@@ -47,19 +46,19 @@ contract MedicalRecord {
 
     // Mapping from a hospital's email to a list of its affiliated doctors (past and present)
     mapping(string => DoctorAffiliation[]) public hospitalDoctorAffiliations;
-    
     // --- *** CORRECTED MAPPING *** ---
     // Mapping from a doctor's email to their current hospital and status struct
     mapping(string => DoctorAffiliationStatus) public doctorAffiliationStatus;
-
     // List of hospital emails for easy lookup
     string[] public hospitalList;
-    mapping(string => bool) public isHospitalInList; // Prevents duplicate entries in hospitalList
+    mapping(string => bool) public isHospitalInList;
+    // Prevents duplicate entries in hospitalList
 
     // --- APPOINTMENTS ---
 
     struct Appointment {
-        string consultingId; // Unique ID for the appointment
+        string consultingId;
+        // Unique ID for the appointment
         string patientEmail;
         string doctorEmail;
         string hospitalEmail;
@@ -76,6 +75,10 @@ contract MedicalRecord {
     mapping(string => Appointment[]) public appointmentsForHospital;
     // Mapping from consultingId to its index in the hospital's array for quick updates
     mapping(string => uint256) public hospitalAppointmentIndex;
+    
+    // --- *** NEW MAPPINGS TO FIX STATUS BUG *** ---
+    mapping(string => uint256) public patientAppointmentIndex;
+    mapping(string => uint256) public doctorAppointmentIndex;
 
 
     // --- PRESCRIPTIONS, CONSENT & LOGS (Original Functionality) ---
@@ -88,7 +91,8 @@ contract MedicalRecord {
     }
 
     struct Consent {
-        string granteeId; // Now the grantee's email
+        string granteeId;
+        // Now the grantee's email
         string accessLevel;
         uint256 duration; 
         string status; 
@@ -105,8 +109,10 @@ contract MedicalRecord {
     }
 
     mapping(string => Prescription[]) public records; // Key: patient email
-    mapping(string => Consent[]) public consentLog; // Key: patient email
-    mapping(string => TransactionLog[]) public transactionLogs; // Key: patient email
+    mapping(string => Consent[]) public consentLog;
+    // Key: patient email
+    mapping(string => TransactionLog[]) public transactionLogs;
+    // Key: patient email
 
 
     // --- EVENTS ---
@@ -117,12 +123,11 @@ contract MedicalRecord {
     event UserRegistered(string email, UserType userType, uint256 timestamp);
     event AffiliationManaged(string hospitalEmail, string doctorEmail, AffiliationStatus status, uint256 timestamp);
     event AppointmentStatusUpdated(string consultingId, string status, uint256 timestamp);
-
-    
     // --- USER MANAGEMENT FUNCTIONS ---
 
     /**
-     * @dev Registers a new Patient or Hospital. Doctors must use requestDoctorAffiliation.
+     * @dev Registers a new Patient or Hospital.
+     * Doctors must use requestDoctorAffiliation.
      */
     function registerUser(
         string memory _email,
@@ -131,8 +136,8 @@ contract MedicalRecord {
         UserType _userType,
         string memory _details
     ) public {
-        require(isUserEmailRegistered[_email] == false, "Email is already registered");
-        require(_userType != UserType.Doctor, "Doctors must use requestDoctorAffiliation");
+        require(isUserEmailRegistered[_email] == false); // "Email is already registered"
+        require(_userType != UserType.Doctor); // "Doctors must use requestDoctorAffiliation"
 
         users[_email] = User({
             email: _email,
@@ -164,10 +169,9 @@ contract MedicalRecord {
         string memory _hospitalEmail,
         string memory _contactDetails // This param was in my server.js, but not here. Adding it.
     ) public {
-        require(isUserEmailRegistered[_doctorEmail] == false, "Email is already registered");
-        require(isUserEmailRegistered[_hospitalEmail] == true, "Hospital not found");
-        require(users[_hospitalEmail].userType == UserType.Hospital, "Target is not a hospital");
-
+        require(isUserEmailRegistered[_doctorEmail] == false); // "Email is already registered"
+        require(isUserEmailRegistered[_hospitalEmail] == true); // "Hospital not found"
+        require(users[_hospitalEmail].userType == UserType.Hospital); // "Target is not a hospital"
         // Register the doctor in the main user mapping
         string memory doctorDetails = string(abi.encodePacked('{"specialization":"', _specialization, '", "contact":"', _contactDetails, '"}'));
         users[_doctorEmail] = User({
@@ -188,14 +192,12 @@ contract MedicalRecord {
             status: AffiliationStatus.Pending,
             timestamp: block.timestamp
         }));
-
         // --- *** UPDATED CODE *** ---
         // Set doctor's initial status using the new struct
         doctorAffiliationStatus[_doctorEmail] = DoctorAffiliationStatus({
             hospitalEmail: _hospitalEmail,
             status: AffiliationStatus.Pending
         });
-
         emit AffiliationManaged(_hospitalEmail, _doctorEmail, AffiliationStatus.Pending, block.timestamp);
     }
 
@@ -208,8 +210,8 @@ contract MedicalRecord {
         AffiliationStatus _status
     ) public {
         // Simple security: only the registered hospital can manage its doctors
-        require(isUserEmailRegistered[_hospitalEmail] == true, "Hospital not found");
-        require(users[_hospitalEmail].userType == UserType.Hospital, "Sender is not a hospital");
+        require(isUserEmailRegistered[_hospitalEmail] == true); // "Hospital not found"
+        require(users[_hospitalEmail].userType == UserType.Hospital); // "Sender is not a hospital"
 
         DoctorAffiliation[] storage affiliations = hospitalDoctorAffiliations[_hospitalEmail];
         bool found = false;
@@ -221,15 +223,13 @@ contract MedicalRecord {
                 break;
             }
         }
-        require(found, "Doctor affiliation not found for this hospital");
-
+        require(found); // "Doctor affiliation not found for this hospital"
         // --- *** UPDATED CODE *** ---
         // Update the doctor's central status using the new struct
         doctorAffiliationStatus[_doctorEmail] = DoctorAffiliationStatus({
             hospitalEmail: _hospitalEmail,
             status: _status
         });
-
         emit AffiliationManaged(_hospitalEmail, _doctorEmail, _status, block.timestamp);
     }
 
@@ -243,8 +243,8 @@ contract MedicalRecord {
         string memory _patientName,
         string memory _doctorName
     ) public {
-        require(isUserEmailRegistered[_patientEmail], "Patient not found");
-        require(isUserEmailRegistered[_doctorEmail], "Doctor not found");
+        require(isUserEmailRegistered[_patientEmail]); // "Patient not found"
+        require(isUserEmailRegistered[_doctorEmail]); // "Doctor not found"
 
         // --- *** UPDATED CODE *** ---
         // Get the doctor's hospital and status from the struct
@@ -252,8 +252,7 @@ contract MedicalRecord {
         string memory hospitalEmail = affiliation.hospitalEmail;
         AffiliationStatus status = affiliation.status;
         
-        require(status == AffiliationStatus.Approved, "Doctor is not approved or affiliated");
-
+        require(status == AffiliationStatus.Approved); // "Doctor is not approved or affiliated"
         Appointment memory newAppointment = Appointment({
             consultingId: _consultingId,
             patientEmail: _patientEmail,
@@ -262,15 +261,18 @@ contract MedicalRecord {
             patientName: _patientName,
             doctorName: _doctorName,
             appointmentTime: _appointmentTime,
+     
             status: "Pending",
             timestamp: block.timestamp
         });
-
         appointmentsForPatient[_patientEmail].push(newAppointment);
         appointmentsForDoctor[_doctorEmail].push(newAppointment);
         appointmentsForHospital[hospitalEmail].push(newAppointment);
         
+        // --- *** UPDATED CODE: Save index for all three *** ---
         hospitalAppointmentIndex[_consultingId] = appointmentsForHospital[hospitalEmail].length - 1;
+        patientAppointmentIndex[_consultingId] = appointmentsForPatient[_patientEmail].length - 1;
+        doctorAppointmentIndex[_consultingId] = appointmentsForDoctor[_doctorEmail].length - 1;
 
         transactionLogs[_patientEmail].push(TransactionLog({
             timestamp: block.timestamp,
@@ -286,18 +288,28 @@ contract MedicalRecord {
         string memory _consultingId,
         string memory _status // "Approved" or "Rejected"
     ) public {
-        require(isUserEmailRegistered[_hospitalEmail], "Hospital not found");
+        require(isUserEmailRegistered[_hospitalEmail]); // "Hospital not found"
         
-        uint index = hospitalAppointmentIndex[_consultingId];
-        Appointment storage appointmentToUpdate = appointmentsForHospital[_hospitalEmail][index];
-
-        require(keccak256(abi.encodePacked(appointmentToUpdate.consultingId)) == keccak256(abi.encodePacked(_consultingId)), "Appointment ID mismatch");
-
-        appointmentToUpdate.status = _status;
-
-        // Note: This logic is still simplified. Updating status in patient/doctor
-        // arrays would require more complex indexing.
+        // --- *** REVISED LOGIC *** ---
         
+        // 1. Get indexes
+        uint hospitalIndex = hospitalAppointmentIndex[_consultingId];
+        uint patientIndex = patientAppointmentIndex[_consultingId];
+        uint doctorIndex = doctorAppointmentIndex[_consultingId];
+
+        // 2. Get the appointment from the hospital's array to read data
+        Appointment storage appointmentToUpdate = appointmentsForHospital[_hospitalEmail][hospitalIndex];
+        require(keccak256(abi.encodePacked(appointmentToUpdate.consultingId)) == keccak256(abi.encodePacked(_consultingId))); // "Appointment ID mismatch"
+
+        // 3. Get the patient and doctor emails from the read appointment
+        string memory patientEmail = appointmentToUpdate.patientEmail;
+        string memory doctorEmail = appointmentToUpdate.doctorEmail;
+
+        // 4. Update status in all three arrays
+        appointmentToUpdate.status = _status; // Hospital array
+        appointmentsForPatient[patientEmail][patientIndex].status = _status; // Patient array
+        appointmentsForDoctor[doctorEmail][doctorIndex].status = _status; // Doctor array
+
         emit AppointmentStatusUpdated(_consultingId, _status, block.timestamp);
     }
 
@@ -305,7 +317,7 @@ contract MedicalRecord {
     // --- VIEW FUNCTIONS (READ-ONLY) ---
 
     function getUser(string memory _email) public view returns (User memory) {
-        require(isUserEmailRegistered[_email], "User not found");
+        require(isUserEmailRegistered[_email]); // "User not found"
         return users[_email];
     }
 
@@ -351,7 +363,8 @@ contract MedicalRecord {
         uint256 _timestamp
     ) public {
         records[_patientEmail].push(Prescription({
-            doctorName: _doctorName,
+            doctorName: 
+            _doctorName,
             disease: _disease,
             cid: _cid,
             timestamp: _timestamp
@@ -374,6 +387,7 @@ contract MedicalRecord {
     ) public {
         consentLog[_patientEmail].push(Consent({
             granteeId: _granteeEmail,
+          
             accessLevel: _accessLevel,
             duration: _duration,
             status: _status,
