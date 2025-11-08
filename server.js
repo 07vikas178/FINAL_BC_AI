@@ -6,62 +6,27 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const cors = require('cors'); 
+const cors = require('cors');
 const { Web3 } = require('web3');
-const { GoogleGenerativeAI } = require("@google/generative-ai"); // Official Google AI SDK
-require('dotenv').config(); // Loads environment variables from .env file
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+require('dotenv').config();
 
 // --- INITIALIZATIONS ---
 const app = express();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// --- MIDDLEWARE SETUP ---
+// --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- IPFS & BLOCKCHAIN SETUP ---
-let ipfs; // IPFS is initialized asynchronously at server startup
-const web3 = new Web3('http://127.0.0.1:7545'); 
+// --- IPFS & WEB3 ---
+let ipfs;
+const web3 = new Web3('http://127.0.0.1:7545');
 
-// =================================================================================
-// ⚠️ IMPORTANT: PASTE YOUR NEW, COMPLETE ABI HERE AFTER COMPILING MedicalRecord.sol
-// =================================================================================
+// ⚠️ PASTE YOUR FULL ABI HERE ⚠️
 const contractABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_disease",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_cid",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "addPrescription",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
 	{
 		"anonymous": false,
 		"inputs": [
@@ -144,44 +109,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_consultingId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_appointmentTime",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_patientName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorName",
-				"type": "string"
-			}
-		],
-		"name": "bookAppointment",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -238,80 +165,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			}
-		],
-		"name": "logHistoryAccess",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_granteeEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_accessLevel",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_duration",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "_status",
-				"type": "string"
-			}
-		],
-		"name": "manageConsent",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_hospitalEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "enum MedicalRecord.AffiliationStatus",
-				"name": "_status",
-				"type": "uint8"
-			}
-		],
-		"name": "manageDoctorAffiliation",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -343,100 +196,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_email",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_hashedPassword",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_name",
-				"type": "string"
-			},
-			{
-				"internalType": "enum MedicalRecord.UserType",
-				"name": "_userType",
-				"type": "uint8"
-			},
-			{
-				"internalType": "string",
-				"name": "_details",
-				"type": "string"
-			}
-		],
-		"name": "registerUser",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_hashedPassword",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_specialization",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_hospitalEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_contactDetails",
-				"type": "string"
-			}
-		],
-		"name": "requestDoctorAffiliation",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_hospitalEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_consultingId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_status",
-				"type": "string"
-			}
-		],
-		"name": "updateAppointmentStatus",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -460,6 +219,39 @@ const contractABI = [
 		],
 		"name": "UserRegistered",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_disease",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_cid",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "addPrescription",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -651,6 +443,44 @@ const contractABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_consultingId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_appointmentTime",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_patientName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorName",
+				"type": "string"
+			}
+		],
+		"name": "bookAppointment",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1337,6 +1167,80 @@ const contractABI = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			}
+		],
+		"name": "logHistoryAccess",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_granteeEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_accessLevel",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_duration",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_status",
+				"type": "string"
+			}
+		],
+		"name": "manageConsent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_hospitalEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "enum MedicalRecord.AffiliationStatus",
+				"name": "_status",
+				"type": "uint8"
+			}
+		],
+		"name": "manageDoctorAffiliation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "",
 				"type": "string"
 			},
@@ -1376,6 +1280,77 @@ const contractABI = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_email",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_hashedPassword",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "enum MedicalRecord.UserType",
+				"name": "_userType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "_details",
+				"type": "string"
+			}
+		],
+		"name": "registerUser",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_hashedPassword",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_specialization",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_hospitalEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contactDetails",
+				"type": "string"
+			}
+		],
+		"name": "requestDoctorAffiliation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "",
 				"type": "string"
 			},
@@ -1409,6 +1384,29 @@ const contractABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_hospitalEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_consultingId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_status",
+				"type": "string"
+			}
+		],
+		"name": "updateAppointmentStatus",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1456,20 +1454,20 @@ const contractABI = [
 		"type": "function"
 	}
 ];
-// =================================================================================
 
-const contractAddress = '0xAD4FA501ea11987f35d7C4C5ED8d193D011D893C'; // <-- UPDATE THIS
-const senderAddress = '0xFaABF7C7Ff55D37732F39452695627Cd692dd38A'; // <-- UPDATE THIS
-const privateKey = '0x77613fff4214412e3ee3c76fb41f17423bead48b1b5a17d8afbb9de50f115c86'; // <-- UPDATE THIS
+// ⚠ UPDATE THESE ADDRESSES & KEYS ⚠
+const contractAddress = '0xc974d485967222bFc9cce5D9ed6Ceb6D4e028bCD';
+const senderAddress = '0xFaABF7C7Ff55D37732F39452695627Cd692dd38A';
+const privateKey = '0x77613fff4214412e3ee3c76fb41f17423bead48b1b5a17d8afbb9de50f115c86';
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-// --- FILE UPLOAD & JWT SETUP ---
+// --- FILE UPLOAD & JWT ---
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 const upload = multer({ dest: uploadDir });
 const JWT_SECRET = process.env.JWT_SECRET || 'a-very-secure-secret-key-for-jwt';
 
-// --- AUTHENTICATION MIDDLEWARE ---
+// --- AUTH MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -1482,7 +1480,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// --- BLOCKCHAIN TRANSACTION HELPER ---
+// --- TRANSACTION HELPER ---
 const sendTransaction = async (method) => {
     try {
         const estimatedGas = await method.estimateGas({ from: senderAddress });
@@ -1502,13 +1500,11 @@ const sendTransaction = async (method) => {
     }
 };
 
-// ============================= //
-// === AI INTEGRATION MODULE === //
-// ============================= //
+// --- AI HELPER ---
 async function callGeminiApi(prompt) {
     try {
         if (!process.env.GEMINI_API_KEY) throw new Error("CRITICAL: GEMINI_API_KEY is missing.");
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-05-20" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
@@ -1519,18 +1515,14 @@ async function callGeminiApi(prompt) {
 }
 
 // ======================= //
-// === FRONTEND ROUTES === //
+// === MAIN APP ROUTES === //
 // ======================= //
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ================== //
-// === API ROUTES === //
-// ================== //
-
-// --- [FIXED] PUBLIC ROUTE FOR FETCHING HOSPITALS ---
-// Removed 'authenticateToken' so doctors can see this BEFORE logging in
+// --- PUBLIC ROUTES ---
 app.get('/api/hospitals', async (req, res) => {
     try {
         const hospitals = await contract.methods.getAllHospitals().call({ from: senderAddress });
@@ -1603,14 +1595,13 @@ app.post('/api/doctor/login', async (req, res) => {
         if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
         
         const affiliation = await contract.methods.getDoctorAffiliation(email).call({ from: senderAddress });
-        // affiliation returns {0: hospitalEmail, 1: status} (tuple)
-        const status = affiliation[1].toString(); 
+        const status = affiliation.status.toString(); // Use named return parameter from struct
 
         if (status === '0') return res.status(403).json({ error: 'Account pending approval.' });
         if (status === '2') return res.status(403).json({ error: 'Account revoked.' });
         if (status !== '1') return res.status(403).json({ error: 'Account not approved.' });
 
-        const hospital = await contract.methods.getUser(affiliation[0]).call({ from: senderAddress });
+        const hospital = await contract.methods.getUser(affiliation.hospitalEmail).call({ from: senderAddress });
         const token = jwt.sign({ email: doctor.email, type: 'doctor', name: doctor.name, hospital_name: hospital.name }, JWT_SECRET, { expiresIn: '1h' });
         res.json({ token });
     } catch (error) { res.status(500).json({ error: 'Login failed: ' + error.message }); }
@@ -1647,7 +1638,28 @@ app.post('/api/hospital/login', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Login failed: ' + error.message }); }
 });
 
-// --- APPOINTMENT ROUTES ---
+// --- PATIENT & APPOINTMENT ROUTES ---
+
+app.get('/api/doctor-details/:email', authenticateToken, async (req, res) => {
+    try {
+        const doctorUser = await contract.methods.getUser(req.params.email).call({ from: senderAddress });
+        let specialization = 'General';
+        try {
+             const details = JSON.parse(doctorUser.details || '{}');
+             specialization = details.specialization || 'General';
+        } catch (e) {}
+
+        res.json({
+            name: doctorUser.name,
+            email: doctorUser.email,
+            specialization: specialization
+        });
+    } catch (error) {
+        console.error("Error fetching doctor details:", error);
+        res.status(500).json({ error: 'Failed to fetch doctor details.' });
+    }
+});
+
 app.get('/api/available-doctors', authenticateToken, async (req, res) => {
     try {
         const { hospital_email } = req.query;
@@ -1676,16 +1688,27 @@ app.get('/api/my-patient-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'patient') return res.status(403).json({ error: 'Forbidden' });
     try {
         const appointments = await contract.methods.getAppointmentsForPatient(req.user.email).call({ from: senderAddress });
-        res.json(appointments.map(a => ({ appointment_id: a.consultingId, appointment_time: a.appointmentTime, status: a.status, doctor_name: a.doctorName })).reverse());
+        res.json(appointments.map(a => ({ appointment_id: a.consultingId, consulting_id: a.consultingId, appointment_time: a.appointmentTime, status: a.status, doctor_name: a.doctorName })).reverse());
     } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments' }); }
 });
 
+// --- HOSPITAL DASHBOARD ROUTES ---
 app.get('/api/all-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'hospital') return res.status(403).json({ error: 'Forbidden' });
     try {
         const appointments = await contract.methods.getAppointmentsForHospital(req.user.email).call({ from: senderAddress });
-        res.json(appointments.map(a => ({ ...a, appointment_id: a.consultingId })).reverse());
-    } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments.' }); }
+        res.json(appointments.map(a => ({ 
+            consulting_id: a.consultingId, 
+            patient_name: a.patientName,
+            patient_email: a.patientEmail,
+            doctor_name: a.doctorName,
+            appointment_time: a.appointmentTime,
+            status: a.status
+        })).reverse());
+    } catch (error) { 
+        console.error("Error fetching hospital appointments:", error);
+        res.status(500).json({ error: 'Failed to fetch appointments.' }); 
+    }
 });
 
 app.put('/api/appointments/:consultingId/status', authenticateToken, async (req, res) => {
@@ -1697,7 +1720,6 @@ app.put('/api/appointments/:consultingId/status', authenticateToken, async (req,
     } catch (error) { res.status(500).json({ error: 'Update failed: ' + error.message }); }
 });
 
-// --- DOCTOR MANAGEMENT ROUTES ---
 app.get('/api/hospital/doctors', authenticateToken, async (req, res) => {
     if (req.user.type !== 'hospital') return res.status(403).json({ error: 'Forbidden' });
     try {
@@ -1719,6 +1741,7 @@ app.put('/api/doctors/:doctorEmail/status', authenticateToken, async (req, res) 
     } catch (error) { res.status(500).json({ error: 'Update failed: ' + error.message }); }
 });
 
+// --- DOCTOR DASHBOARD ROUTES ---
 app.get('/api/my-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'doctor') return res.status(403).json({ error: 'Forbidden' });
     try {
@@ -1730,7 +1753,6 @@ app.get('/api/my-appointments', authenticateToken, async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments.' }); }
 });
 
-// --- MEDICAL RECORDS & AI ---
 app.get('/api/my-prescriptions', authenticateToken, async (req, res) => {
     if (req.user.type !== 'patient') return res.status(403).json({ error: 'Forbidden' });
     try {
@@ -1775,10 +1797,11 @@ app.post('/api/ai/analyze-prescription/:patientEmail', authenticateToken, async 
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- SERVER START ---
+// --- START SERVER ---
 const PORT = process.env.PORT || 3000;
 const startServer = async () => {
     try {
+        // Use dynamic import for ipfs-http-client which is ESM
         const { create } = await import('ipfs-http-client');
         ipfs = create({ host: 'localhost', port: '5001', protocol: 'http' });
         console.log('IPFS initialized.');
