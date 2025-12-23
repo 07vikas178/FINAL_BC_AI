@@ -13,7 +13,11 @@ require('dotenv').config();
 
 // --- INITIALIZATIONS ---
 const app = express();
-// FIX: Using "gemini-pro" instead of "gemini-1.5-flash" to prevent 404 errors
+
+// --- AI CONFIGURATION ---
+// ✅ FIX 1: Use "gemini-flash-latest" which is in your approved list and has better free-tier quotas.
+// "gemini-2.0-flash" had a limit of 0 for your account, causing the crash.
+const MODEL_NAME = "gemini-flash-latest"; 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // --- MIDDLEWARE ---
@@ -1539,22 +1543,26 @@ const sendTransaction = async (method) => {
     }
 };
 
-// --- AI HELPER ---
-async function callGeminiApi(prompt) {
+// --- AI HELPER (WITH RETRY LOGIC) ---
+// ✅ FIX 2: Added intelligent retry mechanism for 429 Rate Limit errors
+async function callGeminiApi(prompt, retries = 3) {
     try {
         if (!process.env.GEMINI_API_KEY) throw new Error("CRITICAL: GEMINI_API_KEY is missing.");
         
-        // FIX: Replaced "gemini-1.5-flash" with "gemini-pro"
-        // This is a more stable model alias for general API use and prevents 404s
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        
+        const model = genAI.getGenerativeModel({ model: MODEL_NAME });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
     } catch (error) {
-        // Log actual error to server console to help debug
-        console.error("Gemini API Error:", error);
-        throw new Error("AI service failed. Check server logs.");
+        // If rate limited (429) and we have retries left, wait and try again
+        if (error.status === 429 && retries > 0) {
+            console.warn(`⚠️ Rate limit hit. Retrying in 5 seconds... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            return callGeminiApi(prompt, retries - 1);
+        }
+
+        console.error(`Gemini API Error (${MODEL_NAME}):`, error);
+        throw new Error(`AI service failed with model ${MODEL_NAME}. Check server logs.`);
     }
 }
 
@@ -1736,7 +1744,7 @@ app.get('/api/my-patient-appointments', authenticateToken, async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments' }); }
 });
 
-// --- TRANSACTION LOGS (Fixed) ---
+// --- TRANSACTION LOGS ---
 app.get('/api/transaction-log', authenticateToken, async (req, res) => {
     try {
         const logs = await contract.methods.getTransactionLog(req.user.email).call({ from: senderAddress });
@@ -1948,7 +1956,7 @@ app.post('/api/ai/analyze-prescription/:patientEmail', authenticateToken, async 
             historyTxt = history.join('\n');
         }
         
-        // --- FIX: Ensure request body exists ---
+        // FIX: Ensure request body exists
         const draft = req.body.draftPrescription || "No draft provided.";
 
         const summary = await callGeminiApi(`Summarize medical history:\n${historyTxt}`);
