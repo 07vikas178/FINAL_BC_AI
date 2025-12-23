@@ -10,15 +10,13 @@
         .container { background: white; padding: 2rem 2.5rem; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 700px; }
         h1 { color: #333; text-align: center; margin-bottom: 1.5rem; font-weight: 600; }
         
-        /* Form Styling */
         label { display: block; margin-bottom: .5rem; font-weight: 600; color: #555; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         input, textarea { width: 100%; box-sizing: border-box; padding: .75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; transition: border-color 0.3s; }
         input:focus, textarea:focus { border-color: #007bff; outline: none; }
         input:read-only { background-color: #e9ecef; cursor: not-allowed; }
-        textarea { min-height: 120px; resize: vertical; grid-column: 1 / -1; } /* Span full width */
+        textarea { min-height: 120px; resize: vertical; grid-column: 1 / -1; } 
         
-        /* Button Styling */
         button { width: 100%; padding: .8rem; border: none; border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s, transform 0.2s; }
         button:hover { transform: translateY(-2px); }
         #submit-btn { background-color: #007bff; }
@@ -27,7 +25,6 @@
         #ai-btn:hover { background-color: #218838; }
         button:disabled { background-color: #a0c3e6; cursor: wait; transform: none; }
         
-        /* AI Results Area */
         #ai-analysis-section { display: none; margin-top: 2rem; border-top: 2px solid #eee; padding-top: 1.5rem; }
         #ai-analysis-section h2 { text-align: center; color: #444; margin-bottom: 1.5rem; font-weight: 600; }
         .ai-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
@@ -36,7 +33,6 @@
         #accept-suggestion-btn { background-color: #ffc107; color: #212529; margin-top: 1rem; }
         #accept-suggestion-btn:hover { background-color: #e0a800; }
         
-        /* Messaging */
         .message { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; display: none; text-align: center; font-weight: 500;}
         .success { background-color: #d4edda; color: #155724; }
         .error { background-color: #f8d7da; color: #721c24; }
@@ -64,14 +60,12 @@
         <label for="text">Draft Prescription</label>
         <textarea id="text" name="text" placeholder="E.g., Paracetamol 500mg, 1 tablet twice a day for 3 days."></textarea>
         
-        <!-- AI and Final Submission Buttons -->
         <div class="form-grid">
             <button type="button" id="ai-btn">Get AI Analysis</button>
             <button type="submit" id="submit-btn">Submit Final Prescription</button>
         </div>
     </form>
     
-    <!-- AI Analysis Results Section -->
     <div id="ai-analysis-section">
         <h2>AI Clinical Decision Support</h2>
         <div class="ai-card" id="summary-card">
@@ -89,7 +83,7 @@
 </div>
 
 <script>
-let rewrittenPrescriptionText = ''; // Global variable to hold the AI's suggestion
+let rewrittenPrescriptionText = ''; 
 
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
@@ -142,7 +136,7 @@ document.getElementById('ai-btn').onclick = async function() {
     document.getElementById('accept-suggestion-btn').style.display = 'none';
 
     try {
-        const resp = await fetch(`/api/ai/analyze-prescription/${patientId}`, {
+        const resp = await fetch(`/api/ai/analyze-prescription/${encodeURIComponent(patientId)}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -151,7 +145,15 @@ document.getElementById('ai-btn').onclick = async function() {
             body: JSON.stringify({ draftPrescription })
         });
 
-        const res = await resp.json();
+        // Try to parse JSON, if fails, read text (often 500 error page HTML)
+        let res;
+        const contentType = resp.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            res = await resp.json();
+        } else {
+            const text = await resp.text();
+            throw new Error(`Server Error: ${resp.status} - ${text.substring(0, 100)}`);
+        }
 
         if (!resp.ok) {
             throw new Error(res.error || 'An unknown error occurred during AI analysis.');
@@ -160,7 +162,6 @@ document.getElementById('ai-btn').onclick = async function() {
         document.getElementById('ai-summary-content').textContent = res.historySummary;
         document.getElementById('ai-analysis-content').textContent = res.prescriptionAnalysis;
 
-        // Extract the rewritten prescription for the "accept" button
         const analysisText = res.prescriptionAnalysis;
         const match = analysisText.match(/Rewritten Prescription\s*:\s*([\s\S]*)/i);
         if (match && match[1]) {
@@ -172,7 +173,9 @@ document.getElementById('ai-btn').onclick = async function() {
         msgDiv.textContent = 'AI Analysis Error: ' + error.message;
         msgDiv.className = 'message error';
         msgDiv.style.display = 'block';
-        aiSection.style.display = 'none'; // Hide on error
+        // Hide only the content, keep the error visible
+        document.getElementById('ai-summary-content').textContent = "Failed.";
+        document.getElementById('ai-analysis-content').textContent = "Failed.";
     } finally {
         aiBtn.disabled = false;
         aiBtn.textContent = 'Re-run AI Analysis';
@@ -182,7 +185,6 @@ document.getElementById('ai-btn').onclick = async function() {
 document.getElementById('accept-suggestion-btn').onclick = function() {
     if (rewrittenPrescriptionText) {
         document.getElementById('text').value = rewrittenPrescriptionText;
-        // Optional: scroll to the top to see the change
         window.scrollTo(0, 0);
     }
 };
@@ -203,7 +205,6 @@ document.getElementById('prescription-form').onsubmit = async function(e) {
     msgDiv.style.display = 'none';
     msgDiv.className = 'message';
     
-    // Create FormData for submission (as it can handle files)
     const formData = new FormData();
     formData.append('patientId', form.patientId.value);
     formData.append('doctorName', form.doctorName.value);
@@ -224,7 +225,7 @@ document.getElementById('prescription-form').onsubmit = async function(e) {
             msgDiv.className = 'message success';
             form.disease.value = '';
             form.text.value = '';
-            document.getElementById('ai-analysis-section').style.display = 'none'; // Hide AI section on success
+            document.getElementById('ai-analysis-section').style.display = 'none';
         } else {
             throw new Error(res.error || 'An unknown error occurred during submission.');
         }

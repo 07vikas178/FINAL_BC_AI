@@ -1,0 +1,1522 @@
+{
+	"compiler": {
+		"version": "0.8.19+commit.7dd6d404"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "hospitalEmail",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "doctorEmail",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum MedicalRecord.AffiliationStatus",
+						"name": "status",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "AffiliationManaged",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "patientId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "details",
+						"type": "string"
+					}
+				],
+				"name": "AppointmentBooked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "consultingId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "AppointmentStatusUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "patientId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "granteeId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "ConsentManaged",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "patientId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "doctorId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "HistoryAccessed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "patientId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "doctorId",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "cid",
+						"type": "string"
+					}
+				],
+				"name": "RecordUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "email",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum MedicalRecord.UserType",
+						"name": "userType",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "UserRegistered",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_disease",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_cid",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "addPrescription",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "appointmentsForDoctor",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "consultingId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "patientName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "appointmentTime",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "appointmentsForHospital",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "consultingId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "patientName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "appointmentTime",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "appointmentsForPatient",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "consultingId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "patientName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "appointmentTime",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_consultingId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_appointmentTime",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_patientName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_doctorName",
+						"type": "string"
+					}
+				],
+				"name": "bookAppointment",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "consentLog",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "granteeId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "accessLevel",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "duration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "status",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "doctorAffiliationStatus",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "enum MedicalRecord.AffiliationStatus",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "doctorAppointmentIndex",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getAllHospitals",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "email",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "hashedPassword",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "name",
+								"type": "string"
+							},
+							{
+								"internalType": "enum MedicalRecord.UserType",
+								"name": "userType",
+								"type": "uint8"
+							},
+							{
+								"internalType": "string",
+								"name": "details",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "isRegistered",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct MedicalRecord.User[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_doctorEmail",
+						"type": "string"
+					}
+				],
+				"name": "getAppointmentsForDoctor",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "consultingId",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "patientEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "hospitalEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "patientName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "appointmentTime",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "status",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct MedicalRecord.Appointment[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_hospitalEmail",
+						"type": "string"
+					}
+				],
+				"name": "getAppointmentsForHospital",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "consultingId",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "patientEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "hospitalEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "patientName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "appointmentTime",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "status",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct MedicalRecord.Appointment[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					}
+				],
+				"name": "getAppointmentsForPatient",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "consultingId",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "patientEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "hospitalEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "patientName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "appointmentTime",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "status",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct MedicalRecord.Appointment[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					}
+				],
+				"name": "getConsentLog",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "granteeId",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "accessLevel",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "duration",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "status",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct MedicalRecord.Consent[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_doctorEmail",
+						"type": "string"
+					}
+				],
+				"name": "getDoctorAffiliation",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "enum MedicalRecord.AffiliationStatus",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					}
+				],
+				"name": "getHistory",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "doctorName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "disease",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "cid",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct MedicalRecord.Prescription[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_hospitalEmail",
+						"type": "string"
+					}
+				],
+				"name": "getHospitalDoctors",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "doctorEmail",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "doctorName",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "specialization",
+								"type": "string"
+							},
+							{
+								"internalType": "enum MedicalRecord.AffiliationStatus",
+								"name": "status",
+								"type": "uint8"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct MedicalRecord.DoctorAffiliation[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					}
+				],
+				"name": "getTransactionLog",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							},
+							{
+								"internalType": "enum MedicalRecord.LogType",
+								"name": "logType",
+								"type": "uint8"
+							},
+							{
+								"internalType": "string",
+								"name": "performedBy",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "details",
+								"type": "string"
+							}
+						],
+						"internalType": "struct MedicalRecord.TransactionLog[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_email",
+						"type": "string"
+					}
+				],
+				"name": "getUser",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "string",
+								"name": "email",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "hashedPassword",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "name",
+								"type": "string"
+							},
+							{
+								"internalType": "enum MedicalRecord.UserType",
+								"name": "userType",
+								"type": "uint8"
+							},
+							{
+								"internalType": "string",
+								"name": "details",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "isRegistered",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct MedicalRecord.User",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "hospitalAppointmentIndex",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "hospitalDoctorAffiliations",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "specialization",
+						"type": "string"
+					},
+					{
+						"internalType": "enum MedicalRecord.AffiliationStatus",
+						"name": "status",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "hospitalList",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "isHospitalInList",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "isUserEmailRegistered",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_doctorEmail",
+						"type": "string"
+					}
+				],
+				"name": "logHistoryAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_patientEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_granteeEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_accessLevel",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_duration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "_status",
+						"type": "string"
+					}
+				],
+				"name": "manageConsent",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "enum MedicalRecord.AffiliationStatus",
+						"name": "_status",
+						"type": "uint8"
+					}
+				],
+				"name": "manageDoctorAffiliation",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "patientAppointmentIndex",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "records",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "disease",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "cid",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_email",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_hashedPassword",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "enum MedicalRecord.UserType",
+						"name": "_userType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "_details",
+						"type": "string"
+					}
+				],
+				"name": "registerUser",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_doctorEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_hashedPassword",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_doctorName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_specialization",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_contactDetails",
+						"type": "string"
+					}
+				],
+				"name": "requestDoctorAffiliation",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "transactionLogs",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "enum MedicalRecord.LogType",
+						"name": "logType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "performedBy",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "details",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_hospitalEmail",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_consultingId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_status",
+						"type": "string"
+					}
+				],
+				"name": "updateAppointmentStatus",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"name": "users",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "email",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "hashedPassword",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "enum MedicalRecord.UserType",
+						"name": "userType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "details",
+						"type": "string"
+					},
+					{
+						"internalType": "bool",
+						"name": "isRegistered",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "This smart contract now manages all application data, including user identity, appointments, and doctor affiliations, replacing the need for a traditional database.",
+			"kind": "dev",
+			"methods": {
+				"manageDoctorAffiliation(string,string,uint8)": {
+					"details": "A Hospital manages (Approves, Revokes) a doctor's affiliation."
+				},
+				"registerUser(string,string,string,uint8,string)": {
+					"details": "Registers a new Patient or Hospital. Doctors must use requestDoctorAffiliation."
+				},
+				"requestDoctorAffiliation(string,string,string,string,string,string)": {
+					"details": "A Doctor requests to be affiliated with a hospital."
+				}
+			},
+			"title": "MedicalRecord",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"MedicalRecord.sol": "MedicalRecord"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"MedicalRecord.sol": {
+			"keccak256": "0x99d47bca894af04b6e7673f972ac502c85d9e8ae709a27eb733b14f29a277008",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0f8afffeca914fd418f8befd4c3ce2b2cfa2a7bd6cd7211252df935d1f147550",
+				"dweb:/ipfs/QmdzTa398UPF1C5x3sSMpr8emUx9C29K4SbLgHeAZ1q47S"
+			]
+		}
+	},
+	"version": 1
+}
