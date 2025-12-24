@@ -42,7 +42,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header bg-transparent border-0 pt-4 ps-4 d-flex justify-content-between align-items-center">
                 <h5 class="card-title text-success"><i class="bi bi-file-medical me-2"></i>Medical History</h5>
             </div>
@@ -57,6 +57,44 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-header bg-transparent border-0 pt-4 ps-4">
+                <h5 class="card-title text-warning"><i class="bi bi-shield-lock me-2"></i>Manage Data Privacy</h5>
+            </div>
+            <div class="card-body">
+                <form id="consent-form">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">1. Select Hospital</label>
+                            <select id="consent-hospital-select" class="form-select">
+                                <option value="">-- Choose Hospital --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">2. Select Doctor</label>
+                            <select id="consent-doctor-select" class="form-select" required>
+                                <option value="">-- First Choose Hospital --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold">Duration</label>
+                            <select id="consent-duration" class="form-select">
+                                <option value="3600">1 Hour</option>
+                                <option value="86400">24 Hours</option>
+                                <option value="604800">1 Week</option>
+                                <option value="0">Revoke Access</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-warning w-100 text-white fw-bold">Update</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="consent-status-msg" class="mt-2"></div>
+            </div>
+        </div>
+
       </div>
 
       <div class="col-lg-4">
@@ -110,14 +148,20 @@
         } catch (e) { console.error("Token error:", e); }
 
         // --- INITIAL LOAD ---
-        loadHospitals(); // Load hospitals first
+        loadHospitals(); 
         loadAppointments();
         loadMedicalHistory();
         loadTransactionLog();
 
         // --- EVENT LISTENERS ---
+        // Booking Listener
         document.getElementById('hospital-select').addEventListener('change', (e) => {
             loadDoctors(e.target.value);
+        });
+
+        // Consent Listener (NEW)
+        document.getElementById('consent-hospital-select').addEventListener('change', (e) => {
+            loadDoctorsForConsent(e.target.value);
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
@@ -131,25 +175,35 @@
             fetch('/api/hospitals', { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.json())
             .then(hospitals => {
-                const select = document.getElementById('hospital-select');
+                const bookingSelect = document.getElementById('hospital-select');
+                const consentSelect = document.getElementById('consent-hospital-select'); // NEW
+                
                 hospitals.forEach(h => {
-                    const option = document.createElement('option');
-                    option.value = h.id; // This is the hospital's email
-                    option.textContent = h.hospital_name;
-                    select.appendChild(option);
+                    // Populate Booking Dropdown
+                    const option1 = document.createElement('option');
+                    option1.value = h.id; 
+                    option1.textContent = h.hospital_name;
+                    bookingSelect.appendChild(option1);
+
+                    // Populate Consent Dropdown (NEW)
+                    const option2 = document.createElement('option');
+                    option2.value = h.id; 
+                    option2.textContent = h.hospital_name;
+                    consentSelect.appendChild(option2);
                 });
 
-                // Check URL for pre-selected hospital (when coming back from booking page)
+                // Check URL for pre-selected hospital
                 const urlParams = new URLSearchParams(window.location.search);
                 const preSelectedInfo = urlParams.get('hospital_email');
                 if (preSelectedInfo) {
-                    select.value = preSelectedInfo;
+                    bookingSelect.value = preSelectedInfo;
                     loadDoctors(preSelectedInfo);
                 }
             })
             .catch(err => console.error("Failed to load hospitals:", err));
         }
 
+        // Logic for Booking Card (List View)
         function loadDoctors(hospitalEmail) {
             const listContainer = document.getElementById('doctors-list');
             if (!hospitalEmail) {
@@ -159,7 +213,6 @@
 
             listContainer.innerHTML = '<div class="text-center p-3">Loading doctors...</div>';
 
-            // Pass the selected hospital email to the API
             fetch(`/api/available-doctors?hospital_email=${encodeURIComponent(hospitalEmail)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -173,7 +226,6 @@
                 doctors.forEach(doc => {
                     const item = document.createElement('div');
                     item.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    // Pass both doctor ID and hospital email to the booking page
                     item.innerHTML = `
                         <div>
                             <div class="fw-bold">${doc.name}</div>
@@ -190,26 +242,63 @@
             });
         }
 
+        // Logic for Consent Card (Dropdown View) - NEW FUNCTION
+        function loadDoctorsForConsent(hospitalEmail) {
+            const select = document.getElementById('consent-doctor-select');
+            
+            if (!hospitalEmail) {
+                select.innerHTML = '<option value="">-- First Choose Hospital --</option>';
+                return;
+            }
+
+            select.innerHTML = '<option value="">Loading...</option>';
+
+            fetch(`/api/available-doctors?hospital_email=${encodeURIComponent(hospitalEmail)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(doctors => {
+                select.innerHTML = '<option value="">-- Select Doctor --</option>';
+                if (doctors.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = "No doctors available";
+                    select.appendChild(opt);
+                    return;
+                }
+                doctors.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.doctor_id; // This is the email
+                    option.textContent = `${doc.name} (${doc.specialization})`;
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                select.innerHTML = '<option value="">Error loading doctors</option>';
+            });
+        }
+
         function loadAppointments() {
             fetch('/api/my-patient-appointments', { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.json())
             .then(data => {
                 const tbody = document.getElementById('appointments-body');
                 tbody.innerHTML = '';
+                
                 if(data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No appointments found.</td></tr>';
-                    return;
+                } else {
+                    data.forEach(app => {
+                        let statusClass = app.status === 'Approved' ? 'bg-success' : (app.status === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark');
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${new Date(app.appointment_time).toLocaleString()}</td>
+                                <td>Dr. ${app.doctor_name}</td>
+                                <td><span class="badge ${statusClass}">${app.status}</span></td>
+                                <td><small class="text-muted">${app.appointment_id.substring(0, 8)}...</small></td>
+                            </tr>`;
+                    });
                 }
-                data.forEach(app => {
-                    let statusClass = app.status === 'Approved' ? 'bg-success' : (app.status === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark');
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${new Date(app.appointment_time).toLocaleString()}</td>
-                            <td>Dr. ${app.doctor_name}</td>
-                            <td><span class="badge ${statusClass}">${app.status}</span></td>
-                            <td><small class="text-muted">${app.appointment_id.substring(0, 8)}...</small></td>
-                        </tr>`;
-                });
             });
         }
 
@@ -262,6 +351,45 @@
                 });
             });
         }
+        
+        // --- Handle Consent Submit ---
+        document.getElementById('consent-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const doctorEmail = document.getElementById('consent-doctor-select').value;
+            const duration = document.getElementById('consent-duration').value;
+            const msgDiv = document.getElementById('consent-status-msg');
+            
+            if(!doctorEmail) { alert("Please select a doctor."); return; }
+
+            const status = duration === "0" ? "Revoked" : "Granted";
+            const finalDuration = duration === "0" ? 0 : duration;
+
+            msgDiv.innerHTML = '<span class="text-info">Processing on Blockchain...</span>';
+
+            fetch('/api/manage-consent', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    doctorEmail: doctorEmail,
+                    duration: finalDuration,
+                    status: status,
+                    accessLevel: "View History"
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) throw new Error(data.error);
+                msgDiv.innerHTML = `<span class="text-success fw-bold">${data.message}</span>`;
+                loadTransactionLog(); // Refresh logs
+            })
+            .catch(err => {
+                console.error(err);
+                msgDiv.innerHTML = `<span class="text-danger">Error: ${err.message}</span>`;
+            });
+        });
     });
   </script>
 </body>

@@ -15,8 +15,7 @@ require('dotenv').config();
 const app = express();
 
 // --- AI CONFIGURATION ---
-// ✅ FIX 1: Use "gemini-flash-latest" which is in your approved list and has better free-tier quotas.
-// "gemini-2.0-flash" had a limit of 0 for your account, causing the crash.
+// Keeping the model exactly as requested
 const MODEL_NAME = "gemini-flash-latest"; 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -30,7 +29,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 let ipfs;
 const web3 = new Web3('http://127.0.0.1:7545');
 
-// ⚠️ PASTE YOUR FULL ABI HERE ⚠️
+// ⚠️ FULL ABI ⚠️
 const contractABI = [
 	{
 		"anonymous": false,
@@ -1544,17 +1543,16 @@ const sendTransaction = async (method) => {
 };
 
 // --- AI HELPER (WITH RETRY LOGIC) ---
-// ✅ FIX 2: Added intelligent retry mechanism for 429 Rate Limit errors
 async function callGeminiApi(prompt, retries = 3) {
     try {
         if (!process.env.GEMINI_API_KEY) throw new Error("CRITICAL: GEMINI_API_KEY is missing.");
         
+        console.log(`Calling Gemini with model: ${MODEL_NAME}`);
         const model = genAI.getGenerativeModel({ model: MODEL_NAME });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
     } catch (error) {
-        // If rate limited (429) and we have retries left, wait and try again
         if (error.status === 429 && retries > 0) {
             console.warn(`⚠️ Rate limit hit. Retrying in 5 seconds... (${retries} attempts left)`);
             await new Promise(resolve => setTimeout(resolve, 5000));
@@ -1740,9 +1738,65 @@ app.get('/api/my-patient-appointments', authenticateToken, async (req, res) => {
     if (req.user.type !== 'patient') return res.status(403).json({ error: 'Forbidden' });
     try {
         const appointments = await contract.methods.getAppointmentsForPatient(req.user.email).call({ from: senderAddress });
-        res.json(appointments.map(a => ({ appointment_id: a.consultingId, consulting_id: a.consultingId, appointment_time: a.appointmentTime, status: a.status, doctor_name: a.doctorName })).reverse());
+        res.json(appointments.map(a => ({ 
+            appointment_id: a.consultingId, 
+            consulting_id: a.consultingId, 
+            appointment_time: a.appointmentTime, 
+            status: a.status, 
+            doctor_name: a.doctorName,
+            doctor_email: a.doctorEmail 
+        })).reverse());
     } catch (error) { res.status(500).json({ error: 'Failed to fetch appointments' }); }
 });
+
+// --- CONSENT MANAGEMENT ROUTES ---
+
+app.post('/api/manage-consent', authenticateToken, async (req, res) => {
+    if (req.user.type !== 'patient') return res.status(403).json({ error: 'Forbidden' });
+    try {
+        const { doctorEmail, accessLevel, duration, status } = req.body; 
+        
+        const method = contract.methods.manageConsent(
+            req.user.email,
+            doctorEmail,
+            accessLevel || "View History",
+            duration,
+            status 
+        );
+        await sendTransaction(method);
+        res.json({ message: `Consent ${status} successfully.` });
+    } catch (error) {
+        console.error("Error managing consent:", error);
+        res.status(500).json({ error: 'Failed to manage consent.' });
+    }
+});
+
+app.get('/api/check-access/:patientId', authenticateToken, async (req, res) => {
+    if (req.user.type !== 'doctor') return res.status(403).json({ error: 'Forbidden' });
+    try {
+        const patientEmail = req.params.patientId;
+        const doctorEmail = req.user.email;
+        
+        const consentLogs = await contract.methods.getConsentLog(patientEmail).call({ from: senderAddress });
+        
+        const doctorLogs = consentLogs
+            .filter(log => log.granteeId === doctorEmail)
+            .sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+
+        let hasAccess = false;
+        if (doctorLogs.length > 0) {
+            const latestLog = doctorLogs[0];
+            const now = Math.floor(Date.now() / 1000);
+            if (latestLog.status === 'Granted' && (now < Number(latestLog.timestamp) + Number(latestLog.duration))) {
+                hasAccess = true;
+            }
+        }
+        
+        if(hasAccess) res.json({ access: true });
+        else res.status(403).json({ access: false, error: "Access Denied" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 
 // --- TRANSACTION LOGS ---
 app.get('/api/transaction-log', authenticateToken, async (req, res) => {
@@ -1849,8 +1903,39 @@ app.get('/api/my-appointments', authenticateToken, async (req, res) => {
 
 app.get('/api/history/:patientId', authenticateToken, async (req, res) => {
     if (req.user.type !== 'doctor') return res.status(403).json({ error: 'Forbidden' });
+    
     try {
-        const records = await contract.methods.getHistory(req.params.patientId).call({ from: senderAddress });
+        const patientEmail = req.params.patientId;
+        const doctorEmail = req.user.email;
+
+        // 1. Fetch Consent Logs for this patient
+        const consentLogs = await contract.methods.getConsentLog(patientEmail).call({ from: senderAddress });
+        
+        // 2. Logic: Find latest log for this doctor
+        let hasAccess = false;
+        const doctorLogs = consentLogs
+            .filter(log => log.granteeId === doctorEmail)
+            .sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+
+        if (doctorLogs.length > 0) {
+            const latestLog = doctorLogs[0];
+            const now = Math.floor(Date.now() / 1000);
+            const startTime = Number(latestLog.timestamp);
+            const duration = Number(latestLog.duration);
+            
+            // Check if status is Granted AND time has not expired
+            if (latestLog.status === 'Granted' && (now < startTime + duration)) {
+                hasAccess = true;
+            }
+        }
+
+        // 3. Enforce Access
+        if (!hasAccess) {
+            return res.status(403).json({ error: 'Access Denied: You do not have active consent to view this patient\'s history.' });
+        }
+
+        // 4. Fetch History if Allowed
+        const records = await contract.methods.getHistory(patientEmail).call({ from: senderAddress });
         const results = await Promise.all(records.map(async rec => {
             let data = '';
             try { 

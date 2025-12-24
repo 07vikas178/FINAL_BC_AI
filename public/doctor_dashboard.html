@@ -40,8 +40,7 @@
                             </tr>
                         </thead>
                         <tbody id="appointments-table-body">
-                            <!-- Appointments will be loaded here dynamically -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -52,16 +51,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
             if (!token) {
-                // For this example, let's assume a token is set. 
-                // In a real app, you would redirect to login.
-                // window.location.href = '/doctor_login.html';
-                // For demonstration, let's mock a token if none exists.
+                // Placeholder for login redirection
                 if(!localStorage.getItem('token')) {
-                    // This is a placeholder for testing. Replace with your actual login flow.
-                    const fakePayload = { name: 'Test Doctor', id: 1, type: 'doctor' };
-                    const fakeToken = `header.${btoa(JSON.stringify(fakePayload))}.signature`;
-                    localStorage.setItem('token', fakeToken);
-                    location.reload(); // Reload to apply the new token
+                   // ... logic for testing/mocking ...
                 }
             }
 
@@ -70,7 +62,6 @@
                 document.getElementById('doctor-welcome').textContent = `Welcome, Dr. ${payload.name}`;
             } catch (e) {
                 console.error("Failed to decode token:", e);
-                // Clear bad token and reload
                 localStorage.removeItem('token');
                 window.location.href = '/doctor_dashboard.html';
             }
@@ -83,7 +74,6 @@
                     if(res.status === 401 || res.status === 403) {
                          localStorage.removeItem('token');
                          alert("Session expired. Please log in again.");
-                         // window.location.href = '/doctor_login.html';
                     }
                     throw new Error('Failed to fetch appointments');
                 }
@@ -104,7 +94,7 @@
                                 <td>${new Date(app.appointment_time).toLocaleString()}</td>
                                 <td>
                                     <a href="/add_prescription.html?patient_id=${app.patient_id}" class="btn btn-primary btn-sm">Add Prescription</a>
-                                    <a href="/view_history.html?patient_id=${app.patient_id}" class="btn btn-info btn-sm text-white">View History</a>
+                                    <button onclick="checkAccessAndRedirect('${app.patient_id}')" class="btn btn-info btn-sm text-white">View History</button>
                                 </td>
                             </tr>
                         `;
@@ -117,11 +107,30 @@
                 document.getElementById('appointments-table-body').innerHTML = '<tr><td colspan="5" class="text-center text-danger p-4">Error loading appointments. Please try again later.</td></tr>';
             });
 
-         document.getElementById('logout-btn').addEventListener('click', () => {
-            localStorage.removeItem('token');
-            window.location.href = '/index.html';
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                window.location.href = '/index.html';
+            });
         });
-        });
+
+        // --- NEW FUNCTION: Check Access before redirecting ---
+        function checkAccessAndRedirect(patientId) {
+            const token = localStorage.getItem('token');
+            fetch(`/api/check-access/${patientId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => {
+                if (res.status === 403) {
+                    alert("Access Denied: The patient has not granted you consent to view their medical history.");
+                } else if (res.ok) {
+                    window.location.href = `/view_history.html?patient_id=${patientId}`;
+                } else {
+                    // Fallback for network errors or server issues
+                    alert("Error checking access permissions.");
+                }
+            })
+            .catch(err => console.error("Access check failed", err));
+        }
     </script>
 </body>
 </html>
