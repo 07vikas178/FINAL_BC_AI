@@ -33,39 +33,6 @@ const web3 = new Web3('http://127.0.0.1:7545');
 // ⚠️ PASTE YOUR FULL ABI HERE ⚠️
 const contractABI = [
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_disease",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_cid",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "addPrescription",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -147,44 +114,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_consultingId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_appointmentTime",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_patientName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorName",
-				"type": "string"
-			}
-		],
-		"name": "bookAppointment",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -241,80 +170,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			}
-		],
-		"name": "logHistoryAccess",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_patientEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_granteeEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_accessLevel",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_duration",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "_status",
-				"type": "string"
-			}
-		],
-		"name": "manageConsent",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_hospitalEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "enum MedicalRecord.AffiliationStatus",
-				"name": "_status",
-				"type": "uint8"
-			}
-		],
-		"name": "manageDoctorAffiliation",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -346,100 +201,6 @@ const contractABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_email",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_hashedPassword",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_name",
-				"type": "string"
-			},
-			{
-				"internalType": "enum MedicalRecord.UserType",
-				"name": "_userType",
-				"type": "uint8"
-			},
-			{
-				"internalType": "string",
-				"name": "_details",
-				"type": "string"
-			}
-		],
-		"name": "registerUser",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_doctorEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_hashedPassword",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_doctorName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_specialization",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_hospitalEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_contactDetails",
-				"type": "string"
-			}
-		],
-		"name": "requestDoctorAffiliation",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_hospitalEmail",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_consultingId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_status",
-				"type": "string"
-			}
-		],
-		"name": "updateAppointmentStatus",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -463,6 +224,39 @@ const contractABI = [
 		],
 		"name": "UserRegistered",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_disease",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_cid",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "addPrescription",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -654,6 +448,44 @@ const contractABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_consultingId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_appointmentTime",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_patientName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorName",
+				"type": "string"
+			}
+		],
+		"name": "bookAppointment",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1359,6 +1191,80 @@ const contractABI = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			}
+		],
+		"name": "logHistoryAccess",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_patientEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_granteeEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_accessLevel",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_duration",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_status",
+				"type": "string"
+			}
+		],
+		"name": "manageConsent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_hospitalEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "enum MedicalRecord.AffiliationStatus",
+				"name": "_status",
+				"type": "uint8"
+			}
+		],
+		"name": "manageDoctorAffiliation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "",
 				"type": "string"
 			}
@@ -1417,6 +1323,77 @@ const contractABI = [
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_email",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_hashedPassword",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "enum MedicalRecord.UserType",
+				"name": "_userType",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "_details",
+				"type": "string"
+			}
+		],
+		"name": "registerUser",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_doctorEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_hashedPassword",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_doctorName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_specialization",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_hospitalEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_contactDetails",
+				"type": "string"
+			}
+		],
+		"name": "requestDoctorAffiliation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "",
 				"type": "string"
 			},
@@ -1450,6 +1427,29 @@ const contractABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_hospitalEmail",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_consultingId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_status",
+				"type": "string"
+			}
+		],
+		"name": "updateAppointmentStatus",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1499,9 +1499,9 @@ const contractABI = [
 ];
 
 // ⚠ UPDATE THESE ADDRESSES & KEYS ⚠
-const contractAddress = '0x02A0a83FAAD7010C7da8Ed32817806205B2F1c9E';
-const senderAddress = '0xa734608D9bA4cf4De92cdB801922f26936131214';
-const privateKey = '0xf01ef14fe86a9c914d78c7b3169d34e387a26726d755e4fe245238adcdbc4229';
+const contractAddress = '0xd8DD7090D945cBb38aD403Cf236609595a690135';
+const senderAddress = '0xcF0D14D930A2c3F7E32b9402E7B6794810c651B1';
+const privateKey = '0xbc92bfe4aeca53868404a39ec08110081e72fd8c2aab6fd593c88630bdd280c7';
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
 // --- FILE UPLOAD & JWT ---
